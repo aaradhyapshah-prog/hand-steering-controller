@@ -589,10 +589,15 @@
 
     function isOnTrack(x, y, map) {
       const route = map.route;
+      const trackHalfWidth = map.width / 2;
+      
       for (let i = 0; i < route.length - 1; i++) {
         const a = route[i];
         const b = route[i + 1];
-        if (pointToSegmentDistance(x, y, a.x, a.y, b.x, b.y) <= map.width / 2 + 8) {
+        const dist = pointToSegmentDistance(x, y, a.x, a.y, b.x, b.y);
+        
+        // Much stricter boundary - car must be within track width
+        if (dist <= trackHalfWidth) {
           return true;
         }
       }
@@ -738,8 +743,8 @@
         steerInput = clamp(wheelPosition * 2.5, -1, 1);
       }
 
-      const accelerate = keys.w || (gestureState.active && gestureState.throttle > 0.5);
-      const brake = keys.s || (gestureState.active && gestureState.brake > 0.5);
+      const accelerate = keys.w || (gestureState.active && gestureState.throttle > 0.3);
+      const brake = keys.s || (gestureState.active && gestureState.brake > 0.3);
 
       // Smooth steering
       player.steerSmooth += (steerInput - player.steerSmooth) * 0.18;
@@ -826,8 +831,8 @@
       hands.setOptions({
         maxNumHands: 2,
         modelComplexity: 1,
-        minDetectionConfidence: 0.65,
-        minTrackingConfidence: 0.55
+        minDetectionConfidence: 0.5,
+        minTrackingConfidence: 0.5
       });
 
       hands.onResults((results) => {
@@ -856,15 +861,22 @@
           }
         }
 
-        // Get primary hand for throttle/brake
+        // Get primary hand for throttle/brake - IMPROVED DETECTION
         const primaryHand = results.multiHandLandmarks[0];
         const wrist = primaryHand[0];
-        const tips = [primaryHand[8], primaryHand[12], primaryHand[16], primaryHand[20]];
-        const fingerSpread = Math.hypot(tips[0].x - tips[3].x, tips[0].y - tips[3].y);
-        const fingerClosed = tips.filter((tip) => tip.y > wrist.y + 0.05).length;
+        const thumb = primaryHand[4];
+        const indexTip = primaryHand[8];
+        const middleTip = primaryHand[12];
+        const ringTip = primaryHand[16];
+        const pinkyTip = primaryHand[20];
+        
+        // Calculate hand openness more accurately
+        const fingerDistance = Math.hypot(thumb.x - pinkyTip.x, thumb.y - pinkyTip.y);
+        const fingerClosed = [indexTip, middleTip, ringTip, pinkyTip].filter((tip) => tip.y > wrist.y + 0.04).length;
 
-        const openPalm = fingerSpread > 0.18 && fingerClosed >= 2;
-        const fists = fingerSpread < 0.12;
+        // Much more lenient thresholds for gesture detection
+        const openPalm = fingerDistance > 0.12 && fingerClosed <= 1;  // Relaxed from 0.18 and >= 2
+        const fists = fingerDistance < 0.15 && fingerClosed >= 3;     // Relaxed from 0.12
 
         gestureState.leftHandX = leftHandX;
         gestureState.rightHandX = rightHandX;
