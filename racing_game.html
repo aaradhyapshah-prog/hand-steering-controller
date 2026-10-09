@@ -3,11 +3,11 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Nepal Racing Game</title>
+  <title>Nepal Racing Challenge</title>
   <style>
     :root {
-      --bg1: #0f172a;
-      --bg2: #111827;
+      --bg1: #05111d;
+      --bg2: #0f172a;
       --panel: rgba(15, 23, 42, 0.9);
       --accent: #22c55e;
       --accent2: #38bdf8;
@@ -18,15 +18,18 @@
 
     * { box-sizing: border-box; }
 
-    body {
+    html, body {
       margin: 0;
-      min-height: 100vh;
+      height: 100%;
+      background: linear-gradient(135deg, var(--bg1), var(--bg2));
+      color: var(--text);
+      font-family: Arial, Helvetica, sans-serif;
+    }
+
+    body {
       display: flex;
       align-items: center;
       justify-content: center;
-      background: linear-gradient(135deg, var(--bg1), var(--bg2));
-      font-family: Arial, Helvetica, sans-serif;
-      color: var(--text);
       padding: 20px;
     }
 
@@ -42,32 +45,32 @@
     .screen.active { display: block; }
 
     .menu-screen {
-      padding: 30px;
+      padding: 26px 24px 30px;
     }
 
     h1 {
-      margin: 0 0 18px;
+      margin: 0 0 12px;
       text-align: center;
       color: var(--accent);
-      font-size: clamp(2rem, 3vw, 3rem);
+      font-size: clamp(1.9rem, 3vw, 3rem);
       text-shadow: 0 0 12px rgba(34, 197, 94, 0.6);
     }
 
     .tagline {
       text-align: center;
       color: var(--muted);
-      margin-bottom: 24px;
+      margin-bottom: 20px;
       font-size: 1rem;
     }
 
     .control-box {
       background: rgba(255,255,255,0.04);
       border: 1px solid rgba(56,189,248,0.6);
-      border-radius: 10px;
+      border-radius: 12px;
       padding: 14px 18px;
-      margin-bottom: 24px;
+      margin-bottom: 22px;
       color: var(--muted);
-      line-height: 1.5;
+      line-height: 1.55;
     }
 
     .control-box strong { color: var(--text); }
@@ -75,14 +78,14 @@
     h2 {
       margin: 18px 0 14px;
       color: var(--accent);
-      font-size: 1.35rem;
+      font-size: 1.3rem;
     }
 
     .selector-grid {
       display: grid;
       grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
       gap: 16px;
-      margin-bottom: 28px;
+      margin-bottom: 20px;
     }
 
     .card {
@@ -118,8 +121,8 @@
     }
 
     .start-btn,
-    .menu-btn,
-    .restart-btn {
+    .restart-btn,
+    .menu-btn {
       display: block;
       margin: 18px auto 0;
       width: min(320px, 100%);
@@ -136,10 +139,29 @@
     }
 
     .start-btn:hover,
-    .menu-btn:hover,
-    .restart-btn:hover {
+    .restart-btn:hover,
+    .menu-btn:hover {
       transform: translateY(-2px) scale(1.01);
       box-shadow: 0 0 24px rgba(34, 197, 94, 0.65);
+    }
+
+    .leaderboard-box {
+      background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(34,197,94,0.6);
+      border-radius: 12px;
+      padding: 12px 14px;
+      margin-top: 8px;
+    }
+
+    .leaderboard-box ol {
+      margin: 10px 0 0 18px;
+      padding: 0;
+      color: var(--text);
+    }
+
+    .leaderboard-box li {
+      margin: 6px 0;
+      color: var(--muted);
     }
 
     .game-screen {
@@ -156,16 +178,8 @@
       border: 1px solid rgba(34,197,94,0.7);
       border-radius: 12px;
       padding: 12px 14px;
-      min-width: 180px;
+      min-width: 200px;
     }
-
-    .stat {
-      font-size: 0.95rem;
-      margin: 2px 0;
-      color: var(--text);
-    }
-
-    .stat strong { color: var(--accent); }
 
     .lap-panel {
       position: absolute;
@@ -178,6 +192,14 @@
       padding: 12px 14px;
       text-align: right;
     }
+
+    .stat {
+      font-size: 0.95rem;
+      margin: 2px 0;
+      color: var(--text);
+    }
+
+    .stat strong { color: var(--accent); }
 
     canvas {
       display: block;
@@ -223,7 +245,7 @@
       display: none;
       align-items: center;
       justify-content: center;
-      background: rgba(2,6,23,0.7);
+      background: rgba(2,6,23,0.72);
       z-index: 50;
     }
 
@@ -231,7 +253,7 @@
 
     .game-over-card {
       width: min(420px, calc(100% - 30px));
-      background: rgba(15, 23, 42, 0.95);
+      background: rgba(15, 23, 42, 0.96);
       border: 2px solid rgba(34,197,94,0.8);
       border-radius: 18px;
       padding: 24px 20px;
@@ -262,23 +284,23 @@
 <body>
   <div class="screen menu-screen active">
     <h1>🏎️ Nepal Racing Challenge</h1>
-    <div class="tagline">Race through the Himalayan roads using keyboard or webcam hand gestures.</div>
+    <div class="tagline">Race through Himalayan roads with keyboard or live hand gestures.</div>
 
     <div class="control-box">
       <strong>Controls:</strong><br />
       Keyboard: W = accelerate, S = brake, A = left, D = right<br />
-      Hand gestures: open palm = accelerate, closed fist = brake, left/right hand position = steer
+      Hand gestures: open palm = accelerate, fist = brake, left/right hand shift = steer, both hands = stable control
     </div>
 
     <h2>Choose Map</h2>
     <div class="selector-grid" id="mapGrid">
       <div class="card selected" data-map="kathmandu">
         <div class="card-title">Kathmandu Valley</div>
-        <div class="card-sub">Temples, lanes, modern city curves</div>
+        <div class="card-sub">Temple streets and tight turns</div>
       </div>
       <div class="card" data-map="pokhara">
         <div class="card-title">Pokhara Highway</div>
-        <div class="card-sub">Lake views and mountain bends</div>
+        <div class="card-sub">Lake loops and mountain bends</div>
       </div>
       <div class="card" data-map="everest">
         <div class="card-title">Everest Base Camp</div>
@@ -290,7 +312,7 @@
     <div class="selector-grid" id="carGrid">
       <div class="card selected" data-car="sports">
         <div class="card-title">Sports Car</div>
-        <div class="card-sub">Fastest, very agile</div>
+        <div class="card-sub">Fastest and agile</div>
       </div>
       <div class="card" data-car="suv">
         <div class="card-title">SUV</div>
@@ -298,8 +320,15 @@
       </div>
       <div class="card" data-car="jeeep">
         <div class="card-title">Off-road Jeep</div>
-        <div class="card-sub">Heavier but durable</div>
+        <div class="card-sub">Heavier but robust</div>
       </div>
+    </div>
+
+    <div class="leaderboard-box">
+      <strong>Best Times</strong>
+      <ol id="leaderboardList">
+        <li>Loading...</li>
+      </ol>
     </div>
 
     <button class="start-btn" id="startBtn">START RACE</button>
@@ -334,6 +363,7 @@
       <p>Top Speed: <strong id="finalTopSpeed">0</strong> km/h</p>
       <p>Average Speed: <strong id="finalAvgSpeed">0</strong> km/h</p>
       <button class="restart-btn" id="restartBtn">RACE AGAIN</button>
+      <button class="menu-btn" id="menuBtn">MAIN MENU</button>
     </div>
   </div>
 
@@ -352,8 +382,8 @@
           {x: 860, y: 230}, {x: 900, y: 400}, {x: 800, y: 540}, {x: 600, y: 570},
           {x: 330, y: 560}, {x: 170, y: 470}, {x: 120, y: 220}
         ],
-        width: 80,
-        obstacles: [{x: 430, y: 300, w: 70, h: 70}, {x: 660, y: 410, w: 55, h: 55}],
+        width: 85,
+        obstacles: [{x: 430, y: 300, w: 72, h: 72}, {x: 660, y: 410, w: 58, h: 58}],
         colors: {skyTop: '#8bd3f4', skyBottom: '#dff5ff', grass: '#4caf50', road: '#4b5563', stripe: '#f8fafc'}
       },
       pokhara: {
@@ -363,7 +393,7 @@
           {x: 820, y: 300}, {x: 840, y: 500}, {x: 620, y: 560}, {x: 300, y: 520},
           {x: 130, y: 420}, {x: 70, y: 330}
         ],
-        width: 90,
+        width: 94,
         obstacles: [{x: 300, y: 260, w: 80, h: 100}, {x: 675, y: 230, w: 50, h: 50}],
         colors: {skyTop: '#7dd3fc', skyBottom: '#e0f2fe', grass: '#22c55e', road: '#374151', stripe: '#e2e8f0'}
       },
@@ -374,34 +404,33 @@
           {x: 760, y: 190}, {x: 840, y: 370}, {x: 720, y: 550}, {x: 400, y: 590},
           {x: 180, y: 450}, {x: 80, y: 300}
         ],
-        width: 72,
+        width: 74,
         obstacles: [{x: 360, y: 260, w: 90, h: 90}, {x: 610, y: 400, w: 62, h: 62}],
         colors: {skyTop: '#e2e8f0', skyBottom: '#cbd5e1', grass: '#4ade80', road: '#475569', stripe: '#f8fafc'}
       }
     };
 
     const CARS = {
-      sports: { name: 'Sports Car', maxSpeed: 420, acceleration: 8.5, brakePower: 9, turnRate: 5.2, width: 24, height: 40, color: '#ef4444' },
-      suv: { name: 'SUV', maxSpeed: 330, acceleration: 6.5, brakePower: 7.5, turnRate: 4.9, width: 28, height: 44, color: '#3b82f6' },
-      jeeep: { name: 'Off-road Jeep', maxSpeed: 280, acceleration: 5.4, brakePower: 6.6, turnRate: 4.3, width: 30, height: 48, color: '#10b981' }
+      sports: { name: 'Sports Car', maxSpeed: 430, acceleration: 8.7, brakePower: 10, turnRate: 5.5, width: 24, height: 40, color: '#ef4444' },
+      suv: { name: 'SUV', maxSpeed: 340, acceleration: 6.7, brakePower: 7.9, turnRate: 5.0, width: 28, height: 44, color: '#3b82f6' },
+      jeeep: { name: 'Off-road Jeep', maxSpeed: 290, acceleration: 5.5, brakePower: 6.9, turnRate: 4.4, width: 30, height: 48, color: '#10b981' }
     };
 
     const selected = { map: 'kathmandu', car: 'sports' };
     const keys = {};
+
     const game = {
       running: false,
       startStamp: 0,
       lap: 1,
       totalLaps: 3,
-      lapTime: 0,
       bestTime: null,
-      lastLapTime: null,
-      totalDistance: 0,
+      winner: null,
       topSpeed: 0,
       speedSum: 0,
       speedSamples: 0,
-      checkpoints: 0,
-      controlMode: 'Keyboard'
+      controlMode: 'Keyboard',
+      leaderboard: []
     };
 
     const player = {
@@ -409,8 +438,8 @@
       y: MAPS.kathmandu.route[0].y,
       speed: 0,
       angle: 20,
-      steering: 0,
-      checkpointIndex: 0
+      checkpointIndex: 0,
+      drift: 0
     };
 
     const gestureState = {
@@ -418,16 +447,48 @@
       steeringValue: 0,
       throttle: 0,
       brake: 0,
-      lastUpdate: 0,
-      detected: false
+      confidence: 0
+    };
+
+    const audio = {
+      ctx: null,
+      enabled: true
     };
 
     function clamp(value, min, max) {
       return Math.min(Math.max(value, min), max);
     }
 
-    function distance(a, b) {
-      return Math.hypot(a.x - b.x, a.y - b.y);
+    function loadLeaderboard() {
+      const raw = localStorage.getItem('nepal-racing-leaderboard');
+      game.leaderboard = raw ? JSON.parse(raw) : [];
+      renderLeaderboard();
+    }
+
+    function renderLeaderboard() {
+      const list = document.getElementById('leaderboardList');
+      if (!game.leaderboard || game.leaderboard.length === 0) {
+        list.innerHTML = '<li>No records yet</li>';
+        return;
+      }
+
+      const topFive = game.leaderboard.slice(0, 5);
+      list.innerHTML = topFive.map((entry, index) => {
+        const sec = Math.round(entry.time);
+        const m = String(Math.floor(sec / 60)).padStart(2, '0');
+        const s = String(sec % 60).padStart(2, '0');
+        return `<li>#${index + 1} — ${entry.map} — ${m}:${s}</li>`;
+      }).join('');
+    }
+
+    function saveLeaderboardRecord(seconds, mapName) {
+      const entry = { time: seconds, map: mapName };
+      const current = JSON.parse(localStorage.getItem('nepal-racing-leaderboard') || '[]');
+      current.push(entry);
+      current.sort((a, b) => a.time - b.time);
+      game.leaderboard = current.slice(0, 5);
+      localStorage.setItem('nepal-racing-leaderboard', JSON.stringify(game.leaderboard));
+      renderLeaderboard();
     }
 
     function setupSelectors() {
@@ -452,6 +513,9 @@
         document.getElementById('gameOverOverlay').classList.remove('visible');
         startRace();
       });
+      document.getElementById('menuBtn').addEventListener('click', () => {
+        returnToMenu();
+      });
     }
 
     function startRace() {
@@ -468,20 +532,16 @@
       player.y = map.route[0].y;
       player.speed = 0;
       player.angle = 20;
-      player.steering = 0;
       player.checkpointIndex = 0;
+      player.drift = 0;
 
       game.running = true;
       game.startStamp = performance.now();
       game.lap = 1;
-      game.lapTime = 0;
       game.bestTime = null;
-      game.lastLapTime = null;
-      game.totalDistance = 0;
       game.topSpeed = 0;
       game.speedSum = 0;
       game.speedSamples = 0;
-      game.checkpoints = 0;
       game.controlMode = gestureState.active ? 'Gesture' : 'Keyboard';
 
       document.getElementById('lapVal').textContent = '1';
@@ -547,7 +607,7 @@
     }
 
     function checkObstacle(x, y, obstacle) {
-      return Math.abs(x - obstacle.x) < obstacle.w / 2 + 15 && Math.abs(y - obstacle.y) < obstacle.h / 2 + 15;
+      return Math.abs(x - obstacle.x) < obstacle.w / 2 + 16 && Math.abs(y - obstacle.y) < obstacle.h / 2 + 16;
     }
 
     function updateLapProgress(map) {
@@ -572,15 +632,18 @@
     }
 
     function finishRace() {
+      if (!game.running) return;
       game.running = false;
       const totalSeconds = Math.floor((performance.now() - game.startStamp) / 1000);
       const minutes = String(Math.floor(totalSeconds / 60)).padStart(2, '0');
       const seconds = String(totalSeconds % 60).padStart(2, '0');
+      saveLeaderboardRecord(totalSeconds, MAPS[selected.map].name);
 
       document.getElementById('finalTime').textContent = `${minutes}:${seconds}`;
       document.getElementById('finalTopSpeed').textContent = String(Math.round(game.topSpeed));
       document.getElementById('finalAvgSpeed').textContent = String(Math.round(game.speedSum / Math.max(game.speedSamples, 1)));
       document.getElementById('gameOverOverlay').classList.add('visible');
+      playTone('finish');
     }
 
     function drawBackground(map) {
@@ -600,9 +663,7 @@
       ctx.lineJoin = 'round';
       ctx.beginPath();
       ctx.moveTo(road[0].x, road[0].y);
-      for (let i = 1; i < road.length; i++) {
-        ctx.lineTo(road[i].x, road[i].y);
-      }
+      for (let i = 1; i < road.length; i++) ctx.lineTo(road[i].x, road[i].y);
       ctx.stroke();
 
       ctx.strokeStyle = map.colors.stripe;
@@ -610,9 +671,7 @@
       ctx.setLineDash([18, 18]);
       ctx.beginPath();
       ctx.moveTo(road[0].x, road[0].y);
-      for (let i = 1; i < road.length; i++) {
-        ctx.lineTo(road[i].x, road[i].y);
-      }
+      for (let i = 1; i < road.length; i++) ctx.lineTo(road[i].x, road[i].y);
       ctx.stroke();
       ctx.setLineDash([]);
 
@@ -640,13 +699,41 @@
       ctx.fillStyle = '#facc15';
       ctx.fillRect(-car.width / 2 + 3, -car.height / 2 - 4, 6, 4);
       ctx.fillRect(car.width / 2 - 9, -car.height / 2 - 4, 6, 4);
-
       ctx.restore();
     }
 
-    function loop() {
-      if (!game.running) return;
+    function playTone(type) {
+      if (!audio.enabled) return;
+      if (!audio.ctx) {
+        const AudioCtx = window.AudioContext || window.webkitAudioContext;
+        audio.ctx = new AudioCtx();
+      }
 
+      const ctxAudio = audio.ctx;
+      const oscillator = ctxAudio.createOscillator();
+      const gain = ctxAudio.createGain();
+      oscillator.connect(gain);
+      gain.connect(ctxAudio.destination);
+
+      const now = ctxAudio.currentTime;
+      let frequency = 220;
+      let duration = 0.12;
+
+      if (type === 'accel') { frequency = 260; duration = 0.08; }
+      if (type === 'brake') { frequency = 140; duration = 0.12; }
+      if (type === 'hit') { frequency = 80; duration = 0.18; }
+      if (type === 'finish') { frequency = 420; duration = 0.35; }
+
+      oscillator.type = type === 'finish' ? 'triangle' : 'sawtooth';
+      oscillator.frequency.setValueAtTime(frequency, now);
+      gain.gain.setValueAtTime(0.001, now);
+      gain.gain.exponentialRampToValueAtTime(0.06, now + 0.03);
+      gain.gain.exponentialRampToValueAtTime(0.0001, now + duration);
+      oscillator.start(now);
+      oscillator.stop(now + duration);
+    }
+
+    function updatePhysics() {
       const map = MAPS[selected.map];
       const car = CARS[selected.car];
 
@@ -656,49 +743,70 @@
       const accelerate = keys.w || (gestureState.active && gestureState.throttle > 0.5);
       const brake = keys.s || (gestureState.active && gestureState.brake > 0.5);
 
+      // forward/back traction physics
+      const grip = 0.97;
+      const drag = 0.985;
+      const accelPower = accelerate ? car.acceleration : 0;
+      const brakePower = brake ? car.brakePower : 0;
+
       if (accelerate) {
-        player.speed += car.acceleration;
+        player.speed += accelPower;
+        if (Math.random() < 0.2) playTone('accel');
       } else {
-        player.speed *= 0.985;
+        player.speed *= drag;
       }
 
       if (brake) {
-        player.speed -= car.brakePower;
+        player.speed -= brakePower;
+        if (Math.random() < 0.25) playTone('brake');
       }
 
-      player.speed = clamp(player.speed, -90, car.maxSpeed);
-      if (Math.abs(player.speed) < 0.1) player.speed = 0;
+      const maxAllowedSpeed = car.maxSpeed * (1 - Math.abs(steerInput) * 0.15);
+      player.speed = clamp(player.speed, -90, maxAllowedSpeed);
+      if (Math.abs(player.speed) < 0.08) player.speed = 0;
 
-      const turnAmount = (steerInput * car.turnRate) * (0.35 + Math.min(Math.abs(player.speed) / 220, 1));
-      player.angle += turnAmount;
+      const turnFactor = clamp(Math.abs(player.speed) / 180, 0.25, 1.3);
+      const targetAngle = steerInput * car.turnRate * turnFactor;
+      player.angle += targetAngle * 0.8 + player.drift * 0.15;
+      player.drift *= grip;
 
       const rad = (player.angle - 90) * Math.PI / 180;
-      player.x += Math.cos(rad) * player.speed * 0.17;
-      player.y += Math.sin(rad) * player.speed * 0.17;
+      const nextX = player.x + Math.cos(rad) * player.speed * 0.17;
+      const nextY = player.y + Math.sin(rad) * player.speed * 0.17;
 
-      if (!isOnTrack(player.x, player.y, map)) {
+      if (!isOnTrack(nextX, nextY, map)) {
         player.speed *= 0.72;
-        player.x -= Math.cos(rad) * 10;
-        player.y -= Math.sin(rad) * 10;
+        player.drift += (steerInput * 3.5);
+        player.x -= Math.cos(rad) * 8;
+        player.y -= Math.sin(rad) * 8;
+        playTone('hit');
+      } else {
+        player.x = nextX;
+        player.y = nextY;
       }
 
       for (const obstacle of map.obstacles) {
         if (checkObstacle(player.x, player.y, obstacle)) {
-          player.speed *= -0.22;
-          player.angle += 30;
+          player.speed *= -0.35;
+          player.angle += 25;
+          player.drift = 0;
+          playTone('hit');
         }
       }
 
-      game.totalDistance += Math.abs(player.speed) * 0.016;
       game.topSpeed = Math.max(game.topSpeed, Math.abs(player.speed));
       game.speedSamples += 1;
       game.speedSum += Math.abs(player.speed);
-
       updateLapProgress(map);
-      drawBackground(map);
+    }
+
+    function loop() {
+      if (!game.running) return;
+
+      updatePhysics();
+      drawBackground(MAPS[selected.map]);
       drawCar();
       updateHUD();
-
       requestAnimationFrame(loop);
     }
 
@@ -720,8 +828,8 @@
       hands.setOptions({
         maxNumHands: 2,
         modelComplexity: 1,
-        minDetectionConfidence: 0.6,
-        minTrackingConfidence: 0.5
+        minDetectionConfidence: 0.65,
+        minTrackingConfidence: 0.55
       });
 
       hands.onResults((results) => {
@@ -730,28 +838,32 @@
           gestureState.steeringValue = 0;
           gestureState.throttle = 0;
           gestureState.brake = 0;
+          gestureState.confidence = 0;
           return;
         }
 
-        const landmarks = results.multiHandLandmarks[0];
-        const wrist = landmarks[0];
-        const indexTip = landmarks[8];
-        const middleTip = landmarks[12];
-        const ringTip = landmarks[16];
-        const pinkyTip = landmarks[20];
+        const handsList = results.multiHandLandmarks;
+        const primary = handsList[0];
+        const wrist = primary[0];
+        const indexTip = primary[8];
+        const middleTip = primary[12];
+        const ringTip = primary[16];
+        const pinkyTip = primary[20];
 
-        const palmWidth = distance(landmarks[4], landmarks[17]);
-        const fingerOpen = [indexTip, middleTip, ringTip, pinkyTip].filter((tip) => tip.y < wrist.y + 0.08).length;
-        const fistLike = palmWidth < 0.17 && fingerOpen <= 1;
-        const palmRaised = wrist.y < 0.68 && fingerOpen >= 3;
+        const fingerSpread = Math.hypot(indexTip.x - pinkyTip.x, indexTip.y - pinkyTip.y);
+        const fingerClosed = [indexTip, middleTip, ringTip, pinkyTip].filter((tip) => tip.y > wrist.y + 0.05).length;
 
-        const centerX = (landmarks[9].x + landmarks[0].x + landmarks[5].x) / 3;
-        const steerRaw = clamp((centerX - 0.5) * 2.2, -1, 1);
+        const palmCenterX = (primary[5].x + primary[9].x + primary[13].x + primary[17].x) / 4;
+        const steerRaw = clamp((palmCenterX - 0.5) * 2.4, -1, 1);
+
+        const openPalm = fingerSpread > 0.18 && fingerClosed >= 2;
+        const fists = fingerSpread < 0.12 || fingerClosed <= 1;
 
         gestureState.steeringValue = steerRaw;
-        gestureState.throttle = palmRaised ? 1 : 0;
-        gestureState.brake = fistLike ? 1 : 0;
+        gestureState.throttle = openPalm ? 1 : 0;
+        gestureState.brake = fists ? 1 : 0;
         gestureState.active = true;
+        gestureState.confidence = 0.8;
       });
 
       const camera = new Camera(webcam, {
@@ -769,6 +881,7 @@
       setupSelectors();
       initKeyboard();
       initGestureTracking();
+      loadLeaderboard();
     }
 
     init();
