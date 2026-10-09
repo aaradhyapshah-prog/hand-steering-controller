@@ -1,0 +1,759 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nepal Racing Game - Hand Gesture Control</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Arial', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 1000px;
+        }
+
+        .menu-screen, .game-screen {
+            background: rgba(0, 0, 0, 0.9);
+            border-radius: 10px;
+            padding: 40px;
+            color: white;
+            display: none;
+        }
+
+        .menu-screen.active, .game-screen.active {
+            display: block;
+        }
+
+        h1 {
+            text-align: center;
+            margin-bottom: 30px;
+            font-size: 2.5em;
+            color: #00ff88;
+            text-shadow: 0 0 10px #00ff88;
+        }
+
+        h2 {
+            color: #00ff88;
+            margin: 20px 0 10px 0;
+            font-size: 1.5em;
+        }
+
+        .map-selector, .car-selector {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+            margin-bottom: 30px;
+        }
+
+        .map-card, .car-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border: 3px solid #00ff88;
+            border-radius: 8px;
+            padding: 20px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .map-card:hover, .car-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 0 20px #00ff88;
+        }
+
+        .map-card.selected, .car-card.selected {
+            background: #00ff88;
+            color: black;
+            font-weight: bold;
+        }
+
+        .map-name, .car-name {
+            font-size: 1.2em;
+            font-weight: bold;
+            margin-bottom: 8px;
+        }
+
+        .map-description, .car-description {
+            font-size: 0.9em;
+            opacity: 0.8;
+        }
+
+        button {
+            background: linear-gradient(135deg, #00ff88 0%, #00cc6f 100%);
+            color: black;
+            border: none;
+            padding: 15px 40px;
+            font-size: 1.1em;
+            font-weight: bold;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            width: 100%;
+            margin-top: 20px;
+        }
+
+        button:hover {
+            transform: scale(1.05);
+            box-shadow: 0 0 20px #00ff88;
+        }
+
+        button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        canvas {
+            display: block;
+            margin: 0 auto;
+            background: linear-gradient(180deg, #87CEEB 0%, #E0F6FF 100%);
+            border: 3px solid #00ff88;
+            border-radius: 8px;
+        }
+
+        .hud {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            color: #00ff88;
+            font-size: 1.1em;
+            text-shadow: 0 0 5px #00ff88;
+            z-index: 10;
+            background: rgba(0, 0, 0, 0.7);
+            padding: 15px;
+            border-radius: 5px;
+            border: 2px solid #00ff88;
+        }
+
+        .speed {
+            font-size: 1.5em;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+
+        .status {
+            font-size: 0.9em;
+            margin: 5px 0;
+        }
+
+        .lap-info {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            color: #00ff88;
+            text-shadow: 0 0 5px #00ff88;
+            z-index: 10;
+            background: rgba(0, 0, 0, 0.7);
+            padding: 15px;
+            border-radius: 5px;
+            border: 2px solid #00ff88;
+            font-size: 1.1em;
+        }
+
+        .mini-map {
+            position: absolute;
+            bottom: 20px;
+            right: 20px;
+            background: rgba(0, 0, 0, 0.7);
+            border: 2px solid #00ff88;
+            border-radius: 5px;
+            padding: 10px;
+        }
+
+        .mini-map canvas {
+            display: block;
+            border: none;
+            margin: 0;
+        }
+
+        .game-over {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(0, 0, 0, 0.95);
+            border: 3px solid #00ff88;
+            border-radius: 10px;
+            padding: 40px;
+            text-align: center;
+            z-index: 100;
+            display: none;
+            color: white;
+        }
+
+        .game-over.show {
+            display: block;
+        }
+
+        .game-over h2 {
+            margin-bottom: 20px;
+            font-size: 2em;
+        }
+
+        .game-over-info {
+            font-size: 1.2em;
+            margin: 15px 0;
+        }
+
+        .controls-info {
+            background: rgba(0, 0, 0, 0.7);
+            border: 2px solid #00ff88;
+            border-radius: 5px;
+            padding: 15px;
+            margin-bottom: 20px;
+            color: #00ff88;
+            font-size: 0.9em;
+        }
+
+        .controls-info h3 {
+            margin-bottom: 10px;
+            color: #fff;
+        }
+    </style>
+</head>
+<body>
+    <!-- Menu Screen -->
+    <div class="menu-screen active">
+        <div class="container">
+            <h1>🏎️ NEPAL RACING GAME 🏎️</h1>
+            
+            <div class="controls-info">
+                <h3>Controls:</h3>
+                <p>🎮 Keyboard: WASD (W=Accelerate, S=Brake, A/D=Steer)</p>
+                <p>👋 Hand Gesture: Use webcam with gesture controller</p>
+            </div>
+
+            <h2>🗺️ Select Map</h2>
+            <div class="map-selector">
+                <div class="map-card selected" data-map="kathmandu">
+                    <div class="map-name">Kathmandu Valley</div>
+                    <div class="map-description">Urban circuit with temples</div>
+                </div>
+                <div class="map-card" data-map="pokhara">
+                    <div class="map-name">Pokhara Highway</div>
+                    <div class="map-description">Mountain curves & lakes</div>
+                </div>
+                <div class="map-card" data-map="everest">
+                    <div class="map-name">Everest Base Camp</div>
+                    <div class="map-description">High altitude challenge</div>
+                </div>
+            </div>
+
+            <h2>🚗 Select Car</h2>
+            <div class="car-selector">
+                <div class="car-card selected" data-car="sports">
+                    <div class="car-name">Sports Car</div>
+                    <div class="car-description">Fast & Agile</div>
+                </div>
+                <div class="car-card" data-car="suv">
+                    <div class="car-name">SUV</div>
+                    <div class="car-description">Balanced</div>
+                </div>
+                <div class="car-card" data-car="jeep">
+                    <div class="car-name">Off-Road Jeep</div>
+                    <div class="car-description">Strong & Stable</div>
+                </div>
+            </div>
+
+            <button onclick="startGame()">🏁 START RACE 🏁</button>
+        </div>
+    </div>
+
+    <!-- Game Screen -->
+    <div class="game-screen" style="padding: 20px; position: relative;">
+        <div class="hud">
+            <div class="speed">Speed: <span id="speed">0</span> km/h</div>
+            <div class="status">Map: <span id="map-name">Kathmandu</span></div>
+            <div class="status">Car: <span id="car-name">Sports Car</span></div>
+            <div class="status" id="controls-status">Controls: Keyboard</div>
+        </div>
+
+        <div class="lap-info">
+            <div>Lap: <span id="lap">1</span>/3</div>
+            <div>Time: <span id="time">00:00</span></div>
+            <div>Best: <span id="best-time">--:--</span></div>
+        </div>
+
+        <canvas id="gameCanvas"></canvas>
+
+        <div class="mini-map">
+            <canvas id="miniMapCanvas" width="120" height="120"></canvas>
+        </div>
+
+        <button onclick="returnToMenu()" style="position: absolute; bottom: 20px; left: 20px; width: 150px; padding: 10px;">MENU</button>
+    </div>
+
+    <div class="game-over">
+        <h2>🏆 RACE FINISHED! 🏆</h2>
+        <div class="game-over-info">
+            <p>Final Time: <span id="final-time">00:00</span></p>
+            <p>Average Speed: <span id="avg-speed">0</span> km/h</p>
+            <p>Top Speed: <span id="top-speed">0</span> km/h</p>
+        </div>
+        <button onclick="returnToMenu()">RETURN TO MENU</button>
+    </div>
+
+    <script>
+        // Configuration
+        const GAME_WIDTH = 1000;
+        const GAME_HEIGHT = 600;
+        const TOTAL_LAPS = 3;
+
+        // Map definitions (tracks with waypoints and environment)
+        const MAPS = {
+            kathmandu: {
+                name: "Kathmandu Valley",
+                background: "linear-gradient(135deg, #e8d4a2 0%, #d4a574 100%)",
+                track: [
+                    {x: 100, y: 200}, {x: 300, y: 150}, {x: 500, y: 120},
+                    {x: 700, y: 150}, {x: 850, y: 200}, {x: 900, y: 400},
+                    {x: 850, y: 550}, {x: 600, y: 580}, {x: 300, y: 550},
+                    {x: 150, y: 450}, {x: 100, y: 200}
+                ],
+                obstacles: [
+                    {x: 400, y: 300, w: 60, h: 60, type: 'temple'},
+                    {x: 700, y: 400, w: 40, h: 40, type: 'stupa'}
+                ],
+                trackWidth: 80
+            },
+            pokhara: {
+                name: "Pokhara Highway",
+                background: "linear-gradient(135deg, #87CEEB 0%, #B0E0E6 100%)",
+                track: [
+                    {x: 50, y: 300}, {x: 200, y: 150}, {x: 400, y: 100},
+                    {x: 600, y: 150}, {x: 750, y: 300}, {x: 800, y: 500},
+                    {x: 600, y: 550}, {x: 350, y: 520}, {x: 150, y: 450}
+                ],
+                obstacles: [
+                    {x: 300, y: 250, w: 50, h: 100, type: 'lake'},
+                    {x: 650, y: 200, w: 40, h: 40, type: 'tree'}
+                ],
+                trackWidth: 100
+            },
+            everest: {
+                name: "Everest Base Camp",
+                background: "linear-gradient(135deg, #f5f5f5 0%, #d3d3d3 100%)",
+                track: [
+                    {x: 100, y: 300}, {x: 250, y: 100}, {x: 400, y: 150},
+                    {x: 550, y: 80}, {x: 700, y: 200}, {x: 800, y: 350},
+                    {x: 700, y: 550}, {x: 400, y: 580}, {x: 200, y: 450}
+                ],
+                obstacles: [
+                    {x: 350, y: 250, w: 80, h: 80, type: 'mountain'},
+                    {x: 600, y: 400, w: 60, h: 60, type: 'rock'}
+                ],
+                trackWidth: 70
+            }
+        };
+
+        // Car definitions
+        const CARS = {
+            sports: {
+                name: "Sports Car",
+                maxSpeed: 400,
+                acceleration: 8,
+                deceleration: 6,
+                turnSpeed: 6,
+                width: 25,
+                height: 40,
+                color: '#FF0000'
+            },
+            suv: {
+                name: "SUV",
+                maxSpeed: 300,
+                acceleration: 5,
+                deceleration: 5,
+                turnSpeed: 5,
+                width: 30,
+                height: 50,
+                color: '#0066FF'
+            },
+            jeep: {
+                name: "Off-Road Jeep",
+                maxSpeed: 250,
+                acceleration: 4,
+                deceleration: 4,
+                turnSpeed: 4,
+                width: 35,
+                height: 55,
+                color: '#00AA00'
+            }
+        };
+
+        // Game state
+        let gameState = {
+            selectedMap: 'kathmandu',
+            selectedCar: 'sports',
+            isRunning: false,
+            startTime: 0,
+            lapTimes: [],
+            currentLap: 1,
+            totalDistance: 0,
+            topSpeed: 0,
+            speedSum: 0,
+            speedCount: 0
+        };
+
+        // Player state
+        let player = {
+            x: 0,
+            y: 0,
+            vx: 0,
+            vy: 0,
+            angle: 0,
+            speed: 0,
+            isAccelerating: false,
+            isBraking: false,
+            steerLeft: false,
+            steerRight: false,
+            checkpointIndex: 0,
+            lapDistance: 0
+        };
+
+        // Keyboard input handler
+        const keys = {};
+        window.addEventListener('keydown', (e) => {
+            keys[e.key.toLowerCase()] = true;
+            e.preventDefault();
+        });
+        window.addEventListener('keyup', (e) => {
+            keys[e.key.toLowerCase()] = false;
+        });
+
+        // Selection handlers
+        document.querySelectorAll('.map-card').forEach(card => {
+            card.addEventListener('click', function() {
+                document.querySelectorAll('.map-card').forEach(c => c.classList.remove('selected'));
+                this.classList.add('selected');
+                gameState.selectedMap = this.dataset.map;
+            });
+        });
+
+        document.querySelectorAll('.car-card').forEach(card => {
+            card.addEventListener('click', function() {
+                document.querySelectorAll('.car-card').forEach(c => c.classList.remove('selected'));
+                this.classList.add('selected');
+                gameState.selectedCar = this.dataset.car;
+            });
+        });
+
+        function startGame() {
+            gameState.isRunning = true;
+            gameState.startTime = Date.now();
+            gameState.lapTimes = [];
+            gameState.currentLap = 1;
+            gameState.totalDistance = 0;
+            gameState.topSpeed = 0;
+            gameState.speedSum = 0;
+            gameState.speedCount = 0;
+
+            const map = MAPS[gameState.selectedMap];
+            player = {
+                x: map.track[0].x,
+                y: map.track[0].y,
+                vx: 0,
+                vy: 0,
+                angle: 45,
+                speed: 0,
+                isAccelerating: false,
+                isBraking: false,
+                steerLeft: false,
+                steerRight: false,
+                checkpointIndex: 0,
+                lapDistance: 0
+            };
+
+            document.querySelector('.menu-screen').classList.remove('active');
+            document.querySelector('.game-screen').classList.add('active');
+            document.querySelector('.game-over').classList.remove('show');
+
+            document.getElementById('map-name').textContent = map.name;
+            document.getElementById('car-name').textContent = CARS[gameState.selectedCar].name;
+
+            gameLoop();
+        }
+
+        function returnToMenu() {
+            gameState.isRunning = false;
+            document.querySelector('.game-screen').classList.remove('active');
+            document.querySelector('.menu-screen').classList.add('active');
+            document.querySelector('.game-over').classList.remove('show');
+        }
+
+        function gameLoop() {
+            const canvas = document.getElementById('gameCanvas');
+            const ctx = canvas.getContext('2d');
+            const miniMapCanvas = document.getElementById('miniMapCanvas');
+            const miniMapCtx = miniMapCanvas.getContext('2d');
+
+            canvas.width = GAME_WIDTH;
+            canvas.height = GAME_HEIGHT;
+
+            function update() {
+                if (!gameState.isRunning) return;
+
+                // Handle input
+                const car = CARS[gameState.selectedCar];
+                
+                player.isAccelerating = keys['w'] || keys['W'];
+                player.isBraking = keys['s'] || keys['S'];
+                player.steerLeft = keys['a'] || keys['A'];
+                player.steerRight = keys['d'] || keys['D'];
+
+                // Update speed
+                if (player.isAccelerating) {
+                    player.speed = Math.min(player.speed + car.acceleration, car.maxSpeed);
+                } else if (player.isBraking) {
+                    player.speed = Math.max(player.speed - car.deceleration * 2, -car.maxSpeed / 2);
+                } else {
+                    player.speed *= 0.95; // Natural deceleration
+                }
+
+                // Update angle
+                if (player.speed !== 0) {
+                    if (player.steerLeft) {
+                        player.angle -= car.turnSpeed;
+                    }
+                    if (player.steerRight) {
+                        player.angle += car.turnSpeed;
+                    }
+                }
+
+                // Update position
+                const rad = (player.angle * Math.PI) / 180;
+                player.x += Math.cos(rad) * player.speed * 0.016;
+                player.y += Math.sin(rad) * player.speed * 0.016;
+
+                // Collision detection with track
+                const map = MAPS[gameState.selectedMap];
+                if (!isOnTrack(player.x, player.y, map)) {
+                    player.speed *= 0.5;
+                }
+
+                // Collision with obstacles
+                for (let obs of map.obstacles) {
+                    if (checkCollision(player.x, player.y, obs)) {
+                        player.speed *= 0.3;
+                        player.x -= Math.cos(rad) * 30;
+                        player.y -= Math.sin(rad) * 30;
+                    }
+                }
+
+                // Check lap progress
+                updateLapProgress(map);
+
+                // Update stats
+                gameState.totalDistance += Math.abs(player.speed) * 0.016;
+                gameState.topSpeed = Math.max(gameState.topSpeed, Math.abs(player.speed));
+                gameState.speedSum += Math.abs(player.speed);
+                gameState.speedCount++;
+
+                // Draw game
+                draw(ctx, map);
+                drawMiniMap(miniMapCtx, map);
+                updateHUD();
+            }
+
+            function draw(ctx, map) {
+                // Draw background
+                ctx.fillStyle = map.background;
+                ctx.fillRect(0, 0, GAME_WIDTH, GAME_HEIGHT);
+
+                // Draw track
+                ctx.strokeStyle = '#FFD700';
+                ctx.lineWidth = map.trackWidth;
+                ctx.lineCap = 'round';
+                ctx.lineJoin = 'round';
+                ctx.beginPath();
+                ctx.moveTo(map.track[0].x, map.track[0].y);
+                for (let i = 1; i < map.track.length; i++) {
+                    ctx.lineTo(map.track[i].x, map.track[i].y);
+                }
+                ctx.stroke();
+
+                // Draw track center line
+                ctx.strokeStyle = 'rgba(255, 255, 255, 0.3)';
+                ctx.lineWidth = 2;
+                ctx.setLineDash([10, 10]);
+                ctx.beginPath();
+                ctx.moveTo(map.track[0].x, map.track[0].y);
+                for (let i = 1; i < map.track.length; i++) {
+                    ctx.lineTo(map.track[i].x, map.track[i].y);
+                }
+                ctx.stroke();
+                ctx.setLineDash([]);
+
+                // Draw obstacles
+                for (let obs of map.obstacles) {
+                    ctx.fillStyle = obs.type === 'temple' || obs.type === 'stupa' ? '#8B4513' :
+                                  obs.type === 'lake' ? '#4169E1' :
+                                  obs.type === 'mountain' ? '#A9A9A9' : '#00AA00';
+                    ctx.fillRect(obs.x - obs.w/2, obs.y - obs.h/2, obs.w, obs.h);
+                }
+
+                // Draw start/finish line
+                ctx.fillStyle = 'rgba(255, 255, 255, 0.5)';
+                ctx.fillRect(map.track[0].x - 40, map.track[0].y - 5, 80, 10);
+
+                // Draw player car
+                ctx.save();
+                ctx.translate(player.x, player.y);
+                ctx.rotate((player.angle * Math.PI) / 180);
+                
+                const car = CARS[gameState.selectedCar];
+                ctx.fillStyle = car.color;
+                ctx.fillRect(-car.width / 2, -car.height / 2, car.width, car.height);
+                
+                // Car windows
+                ctx.fillStyle = '#87CEEB';
+                ctx.fillRect(-car.width / 2 + 2, -car.height / 2 + 2, car.width - 4, car.height / 3);
+                
+                // Car headlights
+                ctx.fillStyle = '#FFFF00';
+                ctx.fillRect(-car.width / 2 + 5, -car.height / 2 - 3, 5, 3);
+                ctx.fillRect(car.width / 2 - 10, -car.height / 2 - 3, 5, 3);
+                
+                ctx.restore();
+            }
+
+            function drawMiniMap(ctx, map) {
+                ctx.fillStyle = '#1a1a1a';
+                ctx.fillRect(0, 0, 120, 120);
+                
+                // Draw track on mini map
+                const scale = 120 / GAME_WIDTH;
+                ctx.strokeStyle = '#FFD700';
+                ctx.lineWidth = 2;
+                ctx.beginPath();
+                ctx.moveTo(map.track[0].x * scale, map.track[0].y * scale);
+                for (let i = 1; i < map.track.length; i++) {
+                    ctx.lineTo(map.track[i].x * scale, map.track[i].y * scale);
+                }
+                ctx.stroke();
+                
+                // Draw player on mini map
+                ctx.fillStyle = '#00FF00';
+                ctx.fillRect(player.x * scale - 2, player.y * scale - 2, 4, 4);
+                
+                ctx.strokeStyle = '#00FF00';
+                ctx.strokeRect(0, 0, 120, 120);
+            }
+
+            function updateHUD() {
+                document.getElementById('speed').textContent = Math.round(Math.abs(player.speed));
+                document.getElementById('lap').textContent = gameState.currentLap;
+
+                const elapsed = Math.floor((Date.now() - gameState.startTime) / 1000);
+                const minutes = Math.floor(elapsed / 60);
+                const seconds = elapsed % 60;
+                document.getElementById('time').textContent = 
+                    `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+
+                if (gameState.lapTimes.length > 0) {
+                    const bestLapSeconds = gameState.lapTimes[0];
+                    const bestMinutes = Math.floor(bestLapSeconds / 60);
+                    const bestSecs = bestLapSeconds % 60;
+                    document.getElementById('best-time').textContent = 
+                        `${bestMinutes.toString().padStart(2, '0')}:${bestSecs.toString().padStart(2, '0')}`;
+                }
+            }
+
+            function updateLapProgress(map) {
+                const nextCheckpoint = map.track[(player.checkpointIndex + 1) % map.track.length];
+                const dist = Math.hypot(player.x - nextCheckpoint.x, player.y - nextCheckpoint.y);
+                
+                if (dist < 50) {
+                    player.checkpointIndex = (player.checkpointIndex + 1) % map.track.length;
+                    
+                    if (player.checkpointIndex === 0) {
+                        // Completed a lap
+                        if (gameState.currentLap < TOTAL_LAPS) {
+                            gameState.currentLap++;
+                            const lapTime = (Date.now() - gameState.startTime) / 1000;
+                            gameState.lapTimes.push(lapTime);
+                        } else {
+                            // Race finished
+                            finishRace();
+                        }
+                    }
+                }
+            }
+
+            function isOnTrack(x, y, map) {
+                for (let i = 0; i < map.track.length; i++) {
+                    const p1 = map.track[i];
+                    const p2 = map.track[(i + 1) % map.track.length];
+                    const dist = pointToLineDistance(x, y, p1.x, p1.y, p2.x, p2.y);
+                    if (dist < map.trackWidth / 2) return true;
+                }
+                return false;
+            }
+
+            function pointToLineDistance(x, y, x1, y1, x2, y2) {
+                const A = x - x1;
+                const B = y - y1;
+                const C = x2 - x1;
+                const D = y2 - y1;
+                const dot = A * C + B * D;
+                const lenSq = C * C + D * D;
+                let param = -1;
+                if (lenSq !== 0) param = dot / lenSq;
+                let xx, yy;
+                if (param < 0) {
+                    xx = x1;
+                    yy = y1;
+                } else if (param > 1) {
+                    xx = x2;
+                    yy = y2;
+                } else {
+                    xx = x1 + param * C;
+                    yy = y1 + param * D;
+                }
+                const dx = x - xx;
+                const dy = y - yy;
+                return Math.sqrt(dx * dx + dy * dy);
+            }
+
+            function checkCollision(x, y, obstacle) {
+                return Math.abs(x - obstacle.x) < obstacle.w / 2 + 15 &&
+                       Math.abs(y - obstacle.y) < obstacle.h / 2 + 15;
+            }
+
+            function finishRace() {
+                gameState.isRunning = false;
+                const totalTime = Math.floor((Date.now() - gameState.startTime) / 1000);
+                const avgSpeed = gameState.speedCount > 0 ? Math.round(gameState.speedSum / gameState.speedCount) : 0;
+
+                document.getElementById('final-time').textContent = 
+                    `${Math.floor(totalTime / 60).toString().padStart(2, '0')}:${(totalTime % 60).toString().padStart(2, '0')}`;
+                document.getElementById('avg-speed').textContent = avgSpeed;
+                document.getElementById('top-speed').textContent = Math.round(gameState.topSpeed);
+
+                document.querySelector('.game-over').classList.add('show');
+            }
+
+            // Animation loop
+            function loop() {
+                if (gameState.isRunning) {
+                    update();
+                    requestAnimationFrame(loop);
+                }
+            }
+
+            loop();
+        }
+    </script>
+</body>
+</html>
