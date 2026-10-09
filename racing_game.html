@@ -446,7 +446,8 @@
       leftHandX: 0.5,
       rightHandX: 0.5,
       throttle: 0,
-      brake: 0
+      brake: 0,
+      steer: 0
     };
 
     const audio = { ctx: null, enabled: true };
@@ -590,13 +591,12 @@
     function isOnTrack(x, y, map) {
       const route = map.route;
       const trackHalfWidth = map.width / 2;
-      
+
       for (let i = 0; i < route.length - 1; i++) {
         const a = route[i];
         const b = route[i + 1];
         const dist = pointToSegmentDistance(x, y, a.x, a.y, b.x, b.y);
-        
-        // Much stricter boundary - car must be within track width
+
         if (dist <= trackHalfWidth) {
           return true;
         }
@@ -737,16 +737,16 @@
 
       let steerInput = (keys.a ? -1 : 0) + (keys.d ? 1 : 0);
 
-      // Gesture steering wheel: tilt hands left/right
       if (gestureState.active) {
         const wheelPosition = gestureState.rightHandX - gestureState.leftHandX;
-        steerInput = clamp(wheelPosition * 2.5, -1, 1);
+        const gestureSteer = clamp(wheelPosition * 3.2, -1, 1);
+        gestureState.steer += (gestureSteer - gestureState.steer) * 0.35;
+        steerInput = gestureState.steer;
       }
 
-      const accelerate = keys.w || (gestureState.active && gestureState.throttle > 0.3);
-      const brake = keys.s || (gestureState.active && gestureState.brake > 0.3);
+      const accelerate = gestureState.active ? gestureState.throttle > 0.35 : keys.w;
+      const brake = gestureState.active ? gestureState.brake > 0.35 : keys.s;
 
-      // Smooth steering
       player.steerSmooth += (steerInput - player.steerSmooth) * 0.18;
 
       const accelPower = accelerate ? car.acceleration : 0;
@@ -831,8 +831,8 @@
       hands.setOptions({
         maxNumHands: 2,
         modelComplexity: 1,
-        minDetectionConfidence: 0.5,
-        minTrackingConfidence: 0.5
+        minDetectionConfidence: 0.45,
+        minTrackingConfidence: 0.45
       });
 
       hands.onResults((results) => {
@@ -842,46 +842,47 @@
           gestureState.rightHandX = 0.5;
           gestureState.throttle = 0;
           gestureState.brake = 0;
+          gestureState.steer = 0;
           return;
         }
 
-        // Get hand positions for steering wheel gesture
         let leftHandX = 0.5;
         let rightHandX = 0.5;
+        let openPalmCount = 0;
+        let fistCount = 0;
 
         for (let i = 0; i < results.multiHandLandmarks.length; i++) {
           const hand = results.multiHandLandmarks[i];
           const handedness = results.multiHandedness[i].label;
-          const palmX = (hand[5].x + hand[9].x + hand[13].x + hand[17].x) / 4;
+          const palmX = (hand[0].x + hand[5].x + hand[9].x + hand[17].x) / 4;
 
           if (handedness === 'Left') {
             leftHandX = palmX;
           } else if (handedness === 'Right') {
             rightHandX = palmX;
           }
+
+          const tips = [hand[8], hand[12], hand[16], hand[20]];
+          const xSpan = Math.max(...tips.map((tip) => tip.x)) - Math.min(...tips.map((tip) => tip.x));
+          const ySpan = Math.max(...tips.map((tip) => tip.y)) - Math.min(...tips.map((tip) => tip.y));
+          const wrist = hand[0];
+          const fingerCurve = Math.abs(wrist.y - hand[9].y);
+
+          if (xSpan > 0.18 && ySpan < 0.22 && fingerCurve > 0.03) {
+            openPalmCount += 1;
+          }
+          if (xSpan < 0.11 && ySpan < 0.18 && fingerCurve < 0.05) {
+            fistCount += 1;
+          }
         }
 
-        // Get primary hand for throttle/brake - IMPROVED DETECTION
-        const primaryHand = results.multiHandLandmarks[0];
-        const wrist = primaryHand[0];
-        const thumb = primaryHand[4];
-        const indexTip = primaryHand[8];
-        const middleTip = primaryHand[12];
-        const ringTip = primaryHand[16];
-        const pinkyTip = primaryHand[20];
-        
-        // Calculate hand openness more accurately
-        const fingerDistance = Math.hypot(thumb.x - pinkyTip.x, thumb.y - pinkyTip.y);
-        const fingerClosed = [indexTip, middleTip, ringTip, pinkyTip].filter((tip) => tip.y > wrist.y + 0.04).length;
-
-        // Much more lenient thresholds for gesture detection
-        const openPalm = fingerDistance > 0.12 && fingerClosed <= 1;  // Relaxed from 0.18 and >= 2
-        const fists = fingerDistance < 0.15 && fingerClosed >= 3;     // Relaxed from 0.12
+        const throttle = openPalmCount > 0 ? 1 : 0;
+        const brake = fistCount > 0 ? 1 : 0;
 
         gestureState.leftHandX = leftHandX;
         gestureState.rightHandX = rightHandX;
-        gestureState.throttle = openPalm ? 1 : 0;
-        gestureState.brake = fists ? 1 : 0;
+        gestureState.throttle = throttle;
+        gestureState.brake = brake;
         gestureState.active = true;
       });
 
