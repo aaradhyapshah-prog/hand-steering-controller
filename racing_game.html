@@ -447,7 +447,9 @@
       rightHandX: 0.5,
       throttle: 0,
       brake: 0,
-      steer: 0
+      steer: 0,
+      throttleSmoothed: 0,
+      brakeSmoothed: 0
     };
 
     const audio = { ctx: null, enabled: true };
@@ -738,14 +740,16 @@
       let steerInput = (keys.a ? -1 : 0) + (keys.d ? 1 : 0);
 
       if (gestureState.active) {
-        const wheelPosition = gestureState.rightHandX - gestureState.leftHandX;
-        const gestureSteer = clamp(wheelPosition * 3.2, -1, 1);
-        gestureState.steer += (gestureSteer - gestureState.steer) * 0.35;
+        const diff = gestureState.rightHandX - gestureState.leftHandX;
+        const gestureSteer = Math.abs(diff) < 0.08 ? 0 : clamp(diff * 2.8, -1, 1);
+        gestureState.steer += (gestureSteer - gestureState.steer) * 0.3;
         steerInput = gestureState.steer;
       }
 
-      const accelerate = gestureState.active ? gestureState.throttle > 0.35 : keys.w;
-      const brake = gestureState.active ? gestureState.brake > 0.35 : keys.s;
+      const gestureThrottle = gestureState.active ? gestureState.throttleSmoothed : 0;
+      const gestureBrake = gestureState.active ? gestureState.brakeSmoothed : 0;
+      const accelerate = gestureState.active ? gestureThrottle > 0.18 : keys.w;
+      const brake = gestureState.active ? gestureBrake > 0.22 : keys.s;
 
       player.steerSmooth += (steerInput - player.steerSmooth) * 0.18;
 
@@ -831,8 +835,8 @@
       hands.setOptions({
         maxNumHands: 2,
         modelComplexity: 1,
-        minDetectionConfidence: 0.45,
-        minTrackingConfidence: 0.45
+        minDetectionConfidence: 0.4,
+        minTrackingConfidence: 0.4
       });
 
       hands.onResults((results) => {
@@ -843,46 +847,47 @@
           gestureState.throttle = 0;
           gestureState.brake = 0;
           gestureState.steer = 0;
+          gestureState.throttleSmoothed = 0;
+          gestureState.brakeSmoothed = 0;
           return;
         }
 
         let leftHandX = 0.5;
         let rightHandX = 0.5;
-        let openPalmCount = 0;
-        let fistCount = 0;
+        let handOpenSignal = 0;
+        let handClosedSignal = 0;
 
         for (let i = 0; i < results.multiHandLandmarks.length; i++) {
           const hand = results.multiHandLandmarks[i];
           const handedness = results.multiHandedness[i].label;
           const palmX = (hand[0].x + hand[5].x + hand[9].x + hand[17].x) / 4;
 
-          if (handedness === 'Left') {
-            leftHandX = palmX;
-          } else if (handedness === 'Right') {
-            rightHandX = palmX;
-          }
+          if (handedness === 'Left') leftHandX = palmX;
+          if (handedness === 'Right') rightHandX = palmX;
 
-          const tips = [hand[8], hand[12], hand[16], hand[20]];
-          const xSpan = Math.max(...tips.map((tip) => tip.x)) - Math.min(...tips.map((tip) => tip.x));
-          const ySpan = Math.max(...tips.map((tip) => tip.y)) - Math.min(...tips.map((tip) => tip.y));
           const wrist = hand[0];
-          const fingerCurve = Math.abs(wrist.y - hand[9].y);
+          const fingerTips = [hand[8], hand[12], hand[16], hand[20]];
+          const tX = fingerTips.map((tip) => tip.x);
+          const tY = fingerTips.map((tip) => tip.y);
+          const spanX = Math.max(...tX) - Math.min(...tX);
+          const spanY = Math.max(...tY) - Math.min(...tY);
+          const centerY = (Math.min(...tY) + Math.max(...tY)) / 2;
+          const handOpen = spanX > 0.18 && spanY < 0.26 && Math.abs(centerY - wrist.y) > 0.04;
+          const handClosed = spanX < 0.12 && spanY < 0.18 && Math.abs(centerY - wrist.y) < 0.05;
 
-          if (xSpan > 0.18 && ySpan < 0.22 && fingerCurve > 0.03) {
-            openPalmCount += 1;
-          }
-          if (xSpan < 0.11 && ySpan < 0.18 && fingerCurve < 0.05) {
-            fistCount += 1;
-          }
+          if (handOpen) handOpenSignal += 1;
+          if (handClosed) handClosedSignal += 1;
         }
 
-        const throttle = openPalmCount > 0 ? 1 : 0;
-        const brake = fistCount > 0 ? 1 : 0;
+        const throttleTarget = handOpenSignal > 0 ? 1 : 0;
+        const brakeTarget = handClosedSignal > 0 ? 1 : 0;
 
         gestureState.leftHandX = leftHandX;
         gestureState.rightHandX = rightHandX;
-        gestureState.throttle = throttle;
-        gestureState.brake = brake;
+        gestureState.throttle = throttleTarget;
+        gestureState.brake = brakeTarget;
+        gestureState.throttleSmoothed += (throttleTarget - gestureState.throttleSmoothed) * 0.35;
+        gestureState.brakeSmoothed += (brakeTarget - gestureState.brakeSmoothed) * 0.35;
         gestureState.active = true;
       });
 
