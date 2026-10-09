@@ -425,7 +425,6 @@
       lap: 1,
       totalLaps: 3,
       bestTime: null,
-      winner: null,
       topSpeed: 0,
       speedSum: 0,
       speedSamples: 0,
@@ -439,7 +438,8 @@
       speed: 0,
       angle: 20,
       checkpointIndex: 0,
-      drift: 0
+      drift: 0,
+      lastSteer: 0
     };
 
     const gestureState = {
@@ -447,6 +447,7 @@
       steeringValue: 0,
       throttle: 0,
       brake: 0,
+      smoothed: 0,
       confidence: 0
     };
 
@@ -534,6 +535,7 @@
       player.angle = 20;
       player.checkpointIndex = 0;
       player.drift = 0;
+      player.lastSteer = 0;
 
       game.running = true;
       game.startStamp = performance.now();
@@ -656,6 +658,21 @@
       ctx.fillStyle = map.colors.grass;
       ctx.fillRect(0, 420, canvas.width, canvas.height - 420);
 
+      // mountain ridges to add Nepal vibe
+      ctx.fillStyle = 'rgba(80, 95, 110, 0.7)';
+      ctx.beginPath();
+      ctx.moveTo(0, 520);
+      ctx.lineTo(120, 420);
+      ctx.lineTo(250, 470);
+      ctx.lineTo(400, 360);
+      ctx.lineTo(620, 500);
+      ctx.lineTo(820, 420);
+      ctx.lineTo(1000, 540);
+      ctx.lineTo(1000, 600);
+      ctx.lineTo(0, 600);
+      ctx.closePath();
+      ctx.fill();
+
       const road = map.route;
       ctx.strokeStyle = map.colors.road;
       ctx.lineWidth = 130;
@@ -738,14 +755,14 @@
       const car = CARS[selected.car];
 
       const inputSteer = (keys.a ? -1 : 0) + (keys.d ? 1 : 0);
-      const gestureSteer = gestureState.active ? gestureState.steeringValue : 0;
+      const gestureSteer = gestureState.active ? gestureState.smoothed : 0;
       const steerInput = gestureState.active ? gestureSteer : inputSteer;
       const accelerate = keys.w || (gestureState.active && gestureState.throttle > 0.5);
       const brake = keys.s || (gestureState.active && gestureState.brake > 0.5);
 
-      // forward/back traction physics
-      const grip = 0.97;
-      const drag = 0.985;
+      const targetSteer = steerInput;
+      player.lastSteer += (targetSteer - player.lastSteer) * 0.2;
+
       const accelPower = accelerate ? car.acceleration : 0;
       const brakePower = brake ? car.brakePower : 0;
 
@@ -753,7 +770,7 @@
         player.speed += accelPower;
         if (Math.random() < 0.2) playTone('accel');
       } else {
-        player.speed *= drag;
+        player.speed *= 0.985;
       }
 
       if (brake) {
@@ -761,14 +778,14 @@
         if (Math.random() < 0.25) playTone('brake');
       }
 
-      const maxAllowedSpeed = car.maxSpeed * (1 - Math.abs(steerInput) * 0.15);
+      const maxAllowedSpeed = car.maxSpeed * (1 - Math.abs(player.lastSteer) * 0.15);
       player.speed = clamp(player.speed, -90, maxAllowedSpeed);
       if (Math.abs(player.speed) < 0.08) player.speed = 0;
 
       const turnFactor = clamp(Math.abs(player.speed) / 180, 0.25, 1.3);
-      const targetAngle = steerInput * car.turnRate * turnFactor;
-      player.angle += targetAngle * 0.8 + player.drift * 0.15;
-      player.drift *= grip;
+      const steeringStrength = (player.lastSteer * car.turnRate) * turnFactor;
+      player.angle += steeringStrength * 0.8 + player.drift * 0.15;
+      player.drift *= 0.97;
 
       const rad = (player.angle - 90) * Math.PI / 180;
       const nextX = player.x + Math.cos(rad) * player.speed * 0.17;
@@ -776,7 +793,7 @@
 
       if (!isOnTrack(nextX, nextY, map)) {
         player.speed *= 0.72;
-        player.drift += (steerInput * 3.5);
+        player.drift += (player.lastSteer * 3.5);
         player.x -= Math.cos(rad) * 8;
         player.y -= Math.sin(rad) * 8;
         playTone('hit');
@@ -839,11 +856,11 @@
           gestureState.throttle = 0;
           gestureState.brake = 0;
           gestureState.confidence = 0;
+          gestureState.smoothed = 0;
           return;
         }
 
-        const handsList = results.multiHandLandmarks;
-        const primary = handsList[0];
+        const primary = results.multiHandLandmarks[0];
         const wrist = primary[0];
         const indexTip = primary[8];
         const middleTip = primary[12];
@@ -852,16 +869,15 @@
 
         const fingerSpread = Math.hypot(indexTip.x - pinkyTip.x, indexTip.y - pinkyTip.y);
         const fingerClosed = [indexTip, middleTip, ringTip, pinkyTip].filter((tip) => tip.y > wrist.y + 0.05).length;
-
         const palmCenterX = (primary[5].x + primary[9].x + primary[13].x + primary[17].x) / 4;
         const steerRaw = clamp((palmCenterX - 0.5) * 2.4, -1, 1);
-
         const openPalm = fingerSpread > 0.18 && fingerClosed >= 2;
         const fists = fingerSpread < 0.12 || fingerClosed <= 1;
 
         gestureState.steeringValue = steerRaw;
         gestureState.throttle = openPalm ? 1 : 0;
         gestureState.brake = fists ? 1 : 0;
+        gestureState.smoothed += (steerRaw - gestureState.smoothed) * 0.25;
         gestureState.active = true;
         gestureState.confidence = 0.8;
       });
