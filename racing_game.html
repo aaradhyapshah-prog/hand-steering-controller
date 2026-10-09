@@ -593,15 +593,11 @@
     function isOnTrack(x, y, map) {
       const route = map.route;
       const trackHalfWidth = map.width / 2;
-
       for (let i = 0; i < route.length - 1; i++) {
         const a = route[i];
         const b = route[i + 1];
         const dist = pointToSegmentDistance(x, y, a.x, a.y, b.x, b.y);
-
-        if (dist <= trackHalfWidth) {
-          return true;
-        }
+        if (dist <= trackHalfWidth) return true;
       }
       return false;
     }
@@ -738,18 +734,21 @@
       const car = CARS[selected.car];
 
       let steerInput = (keys.a ? -1 : 0) + (keys.d ? 1 : 0);
+      let gestureSteer = 0;
+      let gestureAccel = 0;
+      let gestureBrake = 0;
 
       if (gestureState.active) {
         const diff = gestureState.rightHandX - gestureState.leftHandX;
-        const gestureSteer = Math.abs(diff) < 0.08 ? 0 : clamp(diff * 2.8, -1, 1);
-        gestureState.steer += (gestureSteer - gestureState.steer) * 0.3;
+        gestureSteer = Math.abs(diff) < 0.06 ? 0 : clamp(diff * 3.0, -1, 1);
+        gestureState.steer += (gestureSteer - gestureState.steer) * 0.35;
         steerInput = gestureState.steer;
+        gestureAccel = gestureState.throttleSmoothed;
+        gestureBrake = gestureState.brakeSmoothed;
       }
 
-      const gestureThrottle = gestureState.active ? gestureState.throttleSmoothed : 0;
-      const gestureBrake = gestureState.active ? gestureState.brakeSmoothed : 0;
-      const accelerate = gestureState.active ? gestureThrottle > 0.18 : keys.w;
-      const brake = gestureState.active ? gestureBrake > 0.22 : keys.s;
+      const accelerate = gestureState.active ? gestureAccel > 0.22 : keys.w;
+      const brake = gestureState.active ? gestureBrake > 0.25 : keys.s;
 
       player.steerSmooth += (steerInput - player.steerSmooth) * 0.18;
 
@@ -758,14 +757,14 @@
 
       if (accelerate) {
         player.speed += accelPower;
-        if (Math.random() < 0.2) playTone('accel');
+        if (Math.random() < 0.18) playTone('accel');
       } else {
         player.speed *= 0.89;
       }
 
       if (brake) {
         player.speed -= brakePower;
-        if (Math.random() < 0.25) playTone('brake');
+        if (Math.random() < 0.22) playTone('brake');
       }
 
       const maxAllowedSpeed = car.maxSpeed * (1 - Math.abs(player.steerSmooth) * 0.15);
@@ -783,7 +782,7 @@
 
       if (!isOnTrack(nextX, nextY, map)) {
         player.speed *= 0.72;
-        player.drift += (player.steerSmooth * 3.5);
+        player.drift += player.steerSmooth * 3.5;
         player.x -= Math.cos(rad) * 8;
         player.y -= Math.sin(rad) * 8;
         playTone('hit');
@@ -809,7 +808,6 @@
 
     function loop() {
       if (!game.running) return;
-
       updatePhysics();
       drawBackground(MAPS[selected.map]);
       drawCar();
@@ -835,8 +833,8 @@
       hands.setOptions({
         maxNumHands: 2,
         modelComplexity: 1,
-        minDetectionConfidence: 0.4,
-        minTrackingConfidence: 0.4
+        minDetectionConfidence: 0.35,
+        minTrackingConfidence: 0.35
       });
 
       hands.onResults((results) => {
@@ -854,8 +852,8 @@
 
         let leftHandX = 0.5;
         let rightHandX = 0.5;
-        let handOpenSignal = 0;
-        let handClosedSignal = 0;
+        let openSignal = 0;
+        let closedSignal = 0;
 
         for (let i = 0; i < results.multiHandLandmarks.length; i++) {
           const hand = results.multiHandLandmarks[i];
@@ -867,27 +865,28 @@
 
           const wrist = hand[0];
           const fingerTips = [hand[8], hand[12], hand[16], hand[20]];
-          const tX = fingerTips.map((tip) => tip.x);
-          const tY = fingerTips.map((tip) => tip.y);
-          const spanX = Math.max(...tX) - Math.min(...tX);
-          const spanY = Math.max(...tY) - Math.min(...tY);
-          const centerY = (Math.min(...tY) + Math.max(...tY)) / 2;
-          const handOpen = spanX > 0.18 && spanY < 0.26 && Math.abs(centerY - wrist.y) > 0.04;
-          const handClosed = spanX < 0.12 && spanY < 0.18 && Math.abs(centerY - wrist.y) < 0.05;
+          const tipXs = fingerTips.map((tip) => tip.x);
+          const tipYs = fingerTips.map((tip) => tip.y);
+          const spanX = Math.max(...tipXs) - Math.min(...tipXs);
+          const spanY = Math.max(...tipYs) - Math.min(...tipYs);
+          const centerY = (Math.min(...tipYs) + Math.max(...tipYs)) / 2;
 
-          if (handOpen) handOpenSignal += 1;
-          if (handClosed) handClosedSignal += 1;
+          const openPalm = spanX > 0.16 && spanY < 0.26 && Math.abs(centerY - wrist.y) > 0.04;
+          const fist = spanX < 0.12 && spanY < 0.18 && Math.abs(centerY - wrist.y) < 0.05;
+
+          if (openPalm) openSignal += 1;
+          if (fist) closedSignal += 1;
         }
 
-        const throttleTarget = handOpenSignal > 0 ? 1 : 0;
-        const brakeTarget = handClosedSignal > 0 ? 1 : 0;
+        const throttleTarget = openSignal > 0 ? 1 : 0;
+        const brakeTarget = closedSignal > 0 ? 1 : 0;
 
         gestureState.leftHandX = leftHandX;
         gestureState.rightHandX = rightHandX;
         gestureState.throttle = throttleTarget;
         gestureState.brake = brakeTarget;
-        gestureState.throttleSmoothed += (throttleTarget - gestureState.throttleSmoothed) * 0.35;
-        gestureState.brakeSmoothed += (brakeTarget - gestureState.brakeSmoothed) * 0.35;
+        gestureState.throttleSmoothed += (throttleTarget - gestureState.throttleSmoothed) * 0.4;
+        gestureState.brakeSmoothed += (brakeTarget - gestureState.brakeSmoothed) * 0.4;
         gestureState.active = true;
       });
 
