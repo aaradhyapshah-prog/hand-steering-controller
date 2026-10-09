@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Nepal Racing Challenge 3D</title>
+  <title>Nepal Racing Challenge</title>
   <style>
     :root {
       --bg1: #05111d;
@@ -70,6 +70,7 @@
       margin-bottom: 22px;
       color: var(--muted);
       line-height: 1.55;
+      font-size: 0.95rem;
     }
 
     .control-box strong { color: var(--text); }
@@ -152,6 +153,7 @@
       margin: 10px 0 0 18px;
       padding: 0;
       color: var(--text);
+      font-size: 0.9rem;
     }
 
     .leaderboard-box li {
@@ -205,6 +207,7 @@
       margin: 0 auto;
       border: 2px solid rgba(34, 197, 94, 0.75);
       border-radius: 12px;
+      background: linear-gradient(180deg, #7dd3fc 0%, #dbeafe 100%);
     }
 
     .webcam-box {
@@ -278,28 +281,29 @@
 </head>
 <body>
   <div class="screen menu-screen active">
-    <h1>🏎️ Nepal Racing 3D</h1>
-    <div class="tagline">Experience smooth, controllable 3D racing through Himalayan roads.</div>
+    <h1>🏎️ Nepal Racing Challenge</h1>
+    <div class="tagline">Race through Himalayan roads with keyboard or hand gestures.</div>
 
     <div class="control-box">
-      <strong>Controls:</strong><br />
-      Keyboard: W = accelerate, S = brake, A = left, D = right<br />
-      Hand gestures: open palm = accelerate, fist = brake, hand position = smooth steer
+      <strong>Keyboard Controls:</strong><br />
+      W = accelerate, S = brake, A = steer left, D = steer right<br />
+      <strong>Hand Gesture Controls:</strong><br />
+      Tilt hands like steering wheel • Open palm = accelerate • Fist = brake
     </div>
 
     <h2>Choose Map</h2>
     <div class="selector-grid" id="mapGrid">
       <div class="card selected" data-map="kathmandu">
         <div class="card-title">Kathmandu Valley</div>
-        <div class="card-sub">Temple streets</div>
+        <div class="card-sub">Temple streets and tight turns</div>
       </div>
       <div class="card" data-map="pokhara">
         <div class="card-title">Pokhara Highway</div>
-        <div class="card-sub">Lake loops</div>
+        <div class="card-sub">Lake loops and mountain bends</div>
       </div>
       <div class="card" data-map="everest">
         <div class="card-title">Everest Base Camp</div>
-        <div class="card-sub">Mountain roads</div>
+        <div class="card-sub">High-altitude mountain challenge</div>
       </div>
     </div>
 
@@ -307,15 +311,15 @@
     <div class="selector-grid" id="carGrid">
       <div class="card selected" data-car="sports">
         <div class="card-title">Sports Car</div>
-        <div class="card-sub">Fast</div>
+        <div class="card-sub">Fast and agile</div>
       </div>
       <div class="card" data-car="suv">
         <div class="card-title">SUV</div>
-        <div class="card-sub">Balanced</div>
+        <div class="card-sub">Balanced and stable</div>
       </div>
       <div class="card" data-car="jeeep">
         <div class="card-title">Off-road Jeep</div>
-        <div class="card-sub">Robust</div>
+        <div class="card-sub">Heavier but robust</div>
       </div>
     </div>
 
@@ -353,12 +357,12 @@
 
   <div class="game-over" id="gameOverOverlay">
     <div class="game-over-card">
-      <h2>🏁 Finished!</h2>
-      <p>Time: <strong id="finalTime">00:00</strong></p>
+      <h2>🏁 Race Finished!</h2>
+      <p>Final Time: <strong id="finalTime">00:00</strong></p>
       <p>Top Speed: <strong id="finalTopSpeed">0</strong> km/h</p>
-      <p>Avg Speed: <strong id="finalAvgSpeed">0</strong> km/h</p>
+      <p>Average Speed: <strong id="finalAvgSpeed">0</strong> km/h</p>
       <button class="restart-btn" id="restartBtn">RACE AGAIN</button>
-      <button class="menu-btn" id="menuBtn">MENU</button>
+      <button class="menu-btn" id="menuBtn">MAIN MENU</button>
     </div>
   </div>
 
@@ -370,15 +374,45 @@
     const webcam = document.getElementById('webcam');
 
     const MAPS = {
-      kathmandu: { name: 'Kathmandu Valley', checkpoints: [{x: 500, y: 150}, {x: 850, y: 300}, {x: 600, y: 500}, {x: 150, y: 350}], skyCol: '#87CEEB', groundCol: '#90EE90' },
-      pokhara: { name: 'Pokhara Highway', checkpoints: [{x: 350, y: 200}, {x: 800, y: 400}, {x: 500, y: 550}, {x: 200, y: 300}], skyCol: '#87CEEB', groundCol: '#98FB98' },
-      everest: { name: 'Everest Base Camp', checkpoints: [{x: 450, y: 180}, {x: 800, y: 350}, {x: 550, y: 520}, {x: 180, y: 380}], skyCol: '#E0F6FF', groundCol: '#D3D3D3' }
+      kathmandu: {
+        name: 'Kathmandu Valley',
+        route: [
+          {x: 120, y: 220}, {x: 260, y: 150}, {x: 470, y: 120}, {x: 710, y: 160},
+          {x: 860, y: 230}, {x: 900, y: 400}, {x: 800, y: 540}, {x: 600, y: 570},
+          {x: 330, y: 560}, {x: 170, y: 470}, {x: 120, y: 220}
+        ],
+        width: 85,
+        obstacles: [{x: 430, y: 300, w: 72, h: 72}, {x: 660, y: 410, w: 58, h: 58}],
+        colors: {skyTop: '#8bd3f4', skyBottom: '#dff5ff', grass: '#4caf50', road: '#4b5563', stripe: '#f8fafc'}
+      },
+      pokhara: {
+        name: 'Pokhara Highway',
+        route: [
+          {x: 70, y: 330}, {x: 230, y: 180}, {x: 430, y: 120}, {x: 650, y: 170},
+          {x: 820, y: 300}, {x: 840, y: 500}, {x: 620, y: 560}, {x: 300, y: 520},
+          {x: 130, y: 420}, {x: 70, y: 330}
+        ],
+        width: 94,
+        obstacles: [{x: 300, y: 260, w: 80, h: 100}, {x: 675, y: 230, w: 50, h: 50}],
+        colors: {skyTop: '#7dd3fc', skyBottom: '#e0f2fe', grass: '#22c55e', road: '#374151', stripe: '#e2e8f0'}
+      },
+      everest: {
+        name: 'Everest Base Camp',
+        route: [
+          {x: 80, y: 300}, {x: 220, y: 120}, {x: 430, y: 150}, {x: 580, y: 80},
+          {x: 760, y: 190}, {x: 840, y: 370}, {x: 720, y: 550}, {x: 400, y: 590},
+          {x: 180, y: 450}, {x: 80, y: 300}
+        ],
+        width: 74,
+        obstacles: [{x: 360, y: 260, w: 90, h: 90}, {x: 610, y: 400, w: 62, h: 62}],
+        colors: {skyTop: '#e2e8f0', skyBottom: '#cbd5e1', grass: '#4ade80', road: '#475569', stripe: '#f8fafc'}
+      }
     };
 
     const CARS = {
-      sports: { name: 'Sports Car', maxSpeed: 280, accel: 4.5, brake: 5.5, turn: 3.2, width: 24, height: 40, color: '#ef4444' },
-      suv: { name: 'SUV', maxSpeed: 220, accel: 3.5, brake: 4.5, turn: 2.8, width: 28, height: 44, color: '#3b82f6' },
-      jeeep: { name: 'Off-road Jeep', maxSpeed: 200, accel: 3.0, brake: 4.0, turn: 2.5, width: 30, height: 48, color: '#10b981' }
+      sports: { name: 'Sports Car', maxSpeed: 320, acceleration: 6.2, brakePower: 8.0, turnRate: 4.2, width: 24, height: 40, color: '#ef4444' },
+      suv: { name: 'SUV', maxSpeed: 260, acceleration: 5.0, brakePower: 6.5, turnRate: 3.8, width: 28, height: 44, color: '#3b82f6' },
+      jeeep: { name: 'Off-road Jeep', maxSpeed: 240, acceleration: 4.5, brakePower: 6.0, turnRate: 3.5, width: 30, height: 48, color: '#10b981' }
     };
 
     const selected = { map: 'kathmandu', car: 'sports' };
@@ -386,75 +420,87 @@
 
     const game = {
       running: false,
-      start: 0,
+      startStamp: 0,
       lap: 1,
+      totalLaps: 3,
       bestTime: null,
       topSpeed: 0,
       speedSum: 0,
-      samples: 0,
-      mode: 'Keyboard',
+      speedSamples: 0,
+      controlMode: 'Keyboard',
       leaderboard: []
     };
 
     const player = {
-      x: 500, y: 400,
+      x: 120,
+      y: 220,
       speed: 0,
-      angle: 0,
-      checkpoint: 0,
-      steerSmooth: 0,
-      lastOnTrack: 0
+      angle: 20,
+      checkpointIndex: 0,
+      drift: 0,
+      steerSmooth: 0
     };
 
-    const gesture = {
+    const gestureState = {
       active: false,
-      steer: 0,
+      leftHandX: 0.5,
+      rightHandX: 0.5,
       throttle: 0,
-      brake: 0,
-      smooth: 0
+      brake: 0
     };
 
-    function clamp(v, min, max) { return Math.min(Math.max(v, min), max); }
+    const audio = { ctx: null, enabled: true };
+
+    function clamp(value, min, max) {
+      return Math.min(Math.max(value, min), max);
+    }
 
     function loadLeaderboard() {
-      game.leaderboard = JSON.parse(localStorage.getItem('nepal-3d-lb') || '[]');
+      const raw = localStorage.getItem('nepal-racing-leaderboard');
+      game.leaderboard = raw ? JSON.parse(raw) : [];
       renderLeaderboard();
     }
 
     function renderLeaderboard() {
       const list = document.getElementById('leaderboardList');
-      if (!game.leaderboard.length) {
+      if (!game.leaderboard || game.leaderboard.length === 0) {
         list.innerHTML = '<li>No records yet</li>';
         return;
       }
-      list.innerHTML = game.leaderboard.slice(0, 5).map((e, i) => {
-        const m = String(Math.floor(e.time / 60)).padStart(2, '0');
-        const s = String(Math.round(e.time % 60)).padStart(2, '0');
-        return `<li>#${i + 1} — ${e.map} — ${m}:${s}</li>`;
+
+      const topFive = game.leaderboard.slice(0, 5);
+      list.innerHTML = topFive.map((entry, index) => {
+        const sec = Math.round(entry.time);
+        const m = String(Math.floor(sec / 60)).padStart(2, '0');
+        const s = String(sec % 60).padStart(2, '0');
+        return `<li>#${index + 1} — ${entry.map} — ${m}:${s}</li>`;
       }).join('');
     }
 
-    function saveLeaderboard(seconds, mapName) {
-      game.leaderboard.push({ time: seconds, map: mapName });
-      game.leaderboard.sort((a, b) => a.time - b.time);
-      game.leaderboard = game.leaderboard.slice(0, 5);
-      localStorage.setItem('nepal-3d-lb', JSON.stringify(game.leaderboard));
+    function saveLeaderboardRecord(seconds, mapName) {
+      const entry = { time: seconds, map: mapName };
+      const current = JSON.parse(localStorage.getItem('nepal-racing-leaderboard') || '[]');
+      current.push(entry);
+      current.sort((a, b) => a.time - b.time);
+      game.leaderboard = current.slice(0, 5);
+      localStorage.setItem('nepal-racing-leaderboard', JSON.stringify(game.leaderboard));
       renderLeaderboard();
     }
 
     function setupSelectors() {
-      document.querySelectorAll('.card[data-map]').forEach(c => {
-        c.addEventListener('click', () => {
-          document.querySelectorAll('.card[data-map]').forEach(x => x.classList.remove('selected'));
-          c.classList.add('selected');
-          selected.map = c.dataset.map;
+      document.querySelectorAll('.card[data-map]').forEach((card) => {
+        card.addEventListener('click', () => {
+          document.querySelectorAll('.card[data-map]').forEach(c => c.classList.remove('selected'));
+          card.classList.add('selected');
+          selected.map = card.dataset.map;
         });
       });
 
-      document.querySelectorAll('.card[data-car]').forEach(c => {
-        c.addEventListener('click', () => {
-          document.querySelectorAll('.card[data-car]').forEach(x => x.classList.remove('selected'));
-          c.classList.add('selected');
-          selected.car = c.dataset.car;
+      document.querySelectorAll('.card[data-car]').forEach((card) => {
+        card.addEventListener('click', () => {
+          document.querySelectorAll('.card[data-car]').forEach(c => c.classList.remove('selected'));
+          card.classList.add('selected');
+          selected.car = card.dataset.car;
         });
       });
 
@@ -473,26 +519,30 @@
 
     function startRace() {
       const map = MAPS[selected.map];
+      const car = CARS[selected.car];
+
       document.querySelector('.menu-screen').classList.remove('active');
       document.querySelector('.game-screen').classList.add('active');
-      document.getElementById('mapNameVal').textContent = map.name;
-      document.getElementById('carNameVal').textContent = CARS[selected.car].name;
 
-      player.x = 500;
-      player.y = 400;
+      document.getElementById('mapNameVal').textContent = map.name;
+      document.getElementById('carNameVal').textContent = car.name;
+
+      player.x = map.route[0].x;
+      player.y = map.route[0].y;
       player.speed = 0;
-      player.angle = 0;
-      player.checkpoint = 0;
+      player.angle = 20;
+      player.checkpointIndex = 0;
+      player.drift = 0;
       player.steerSmooth = 0;
 
       game.running = true;
-      game.start = performance.now();
+      game.startStamp = performance.now();
       game.lap = 1;
       game.bestTime = null;
       game.topSpeed = 0;
       game.speedSum = 0;
-      game.samples = 0;
-      game.mode = gesture.active ? 'Gesture' : 'Keyboard';
+      game.speedSamples = 0;
+      game.controlMode = gestureState.active ? 'Gesture' : 'Keyboard';
 
       document.getElementById('lapVal').textContent = '1';
       document.getElementById('timeVal').textContent = '00:00';
@@ -503,220 +553,345 @@
     }
 
     function updateHUD() {
-      document.getElementById('speedVal').textContent = Math.round(Math.abs(player.speed));
-      const elapsed = Math.floor((performance.now() - game.start) / 1000);
-      const m = String(Math.floor(elapsed / 60)).padStart(2, '0');
-      const s = String(elapsed % 60).padStart(2, '0');
-      document.getElementById('timeVal').textContent = `${m}:${s}`;
+      const speed = Math.round(Math.abs(player.speed));
+      document.getElementById('speedVal').textContent = speed;
+
+      const elapsedSeconds = Math.floor((performance.now() - game.startStamp) / 1000);
+      const minutes = String(Math.floor(elapsedSeconds / 60)).padStart(2, '0');
+      const seconds = String(elapsedSeconds % 60).padStart(2, '0');
+      document.getElementById('timeVal').textContent = `${minutes}:${seconds}`;
 
       if (game.bestTime !== null) {
-        const bm = String(Math.floor(game.bestTime / 60)).padStart(2, '0');
-        const bs = String(Math.round(game.bestTime % 60)).padStart(2, '0');
-        document.getElementById('bestTimeVal').textContent = `${bm}:${bs}`;
+        const bestMinutes = String(Math.floor(game.bestTime / 60)).padStart(2, '0');
+        const bestSeconds = String(Math.round(game.bestTime % 60)).padStart(2, '0');
+        document.getElementById('bestTimeVal').textContent = `${bestMinutes}:${bestSeconds}`;
       }
 
-      game.mode = gesture.active ? 'Gesture' : 'Keyboard';
-      document.getElementById('controlModeVal').textContent = game.mode;
+      const mode = gestureState.active ? 'Gesture' : 'Keyboard';
+      game.controlMode = mode;
+      document.getElementById('controlModeVal').textContent = mode;
       document.getElementById('lapVal').textContent = String(game.lap);
     }
 
-    function checkpointCollision(map) {
-      const cp = map.checkpoints[player.checkpoint];
-      const d = Math.hypot(player.x - cp.x, player.y - cp.y);
-      if (d < 50) {
-        player.checkpoint = (player.checkpoint + 1) % map.checkpoints.length;
-        if (player.checkpoint === 0) {
-          const lapTime = (performance.now() - game.start) / 1000;
-          if (game.bestTime === null || lapTime < game.bestTime) game.bestTime = lapTime;
-          game.lap++;
-          if (game.lap > 3) finishRace();
+    function pointToSegmentDistance(px, py, x1, y1, x2, y2) {
+      const dx = x2 - x1;
+      const dy = y2 - y1;
+      const lengthSq = dx * dx + dy * dy;
+      let t = 0;
+      if (lengthSq > 0) {
+        t = ((px - x1) * dx + (py - y1) * dy) / lengthSq;
+        t = clamp(t, 0, 1);
+      }
+      const closestX = x1 + t * dx;
+      const closestY = y1 + t * dy;
+      return Math.hypot(px - closestX, py - closestY);
+    }
+
+    function isOnTrack(x, y, map) {
+      const route = map.route;
+      for (let i = 0; i < route.length - 1; i++) {
+        const a = route[i];
+        const b = route[i + 1];
+        if (pointToSegmentDistance(x, y, a.x, a.y, b.x, b.y) <= map.width / 2 + 8) {
+          return true;
+        }
+      }
+      return false;
+    }
+
+    function checkObstacle(x, y, obstacle) {
+      return Math.abs(x - obstacle.x) < obstacle.w / 2 + 16 && Math.abs(y - obstacle.y) < obstacle.h / 2 + 16;
+    }
+
+    function updateLapProgress(map) {
+      const route = map.route;
+      const target = route[player.checkpointIndex];
+      const dist = Math.hypot(player.x - target.x, player.y - target.y);
+
+      if (dist < 45) {
+        player.checkpointIndex += 1;
+        if (player.checkpointIndex >= route.length - 1) {
+          player.checkpointIndex = 0;
+          const lapSeconds = (performance.now() - game.startStamp) / 1000;
+          if (game.bestTime === null || lapSeconds < game.bestTime) {
+            game.bestTime = lapSeconds;
+          }
+          game.lap += 1;
+          if (game.lap > game.totalLaps) {
+            finishRace();
+          }
         }
       }
     }
 
     function finishRace() {
+      if (!game.running) return;
       game.running = false;
-      const totalSec = Math.floor((performance.now() - game.start) / 1000);
-      const m = String(Math.floor(totalSec / 60)).padStart(2, '0');
-      const s = String(totalSec % 60).padStart(2, '0');
-      saveLeaderboard(totalSec, MAPS[selected.map].name);
+      const totalSeconds = Math.floor((performance.now() - game.startStamp) / 1000);
+      const minutes = String(Math.floor(totalSeconds / 60)).padStart(2, '0');
+      const seconds = String(totalSeconds % 60).padStart(2, '0');
+      saveLeaderboardRecord(totalSeconds, MAPS[selected.map].name);
 
-      document.getElementById('finalTime').textContent = `${m}:${s}`;
+      document.getElementById('finalTime').textContent = `${minutes}:${seconds}`;
       document.getElementById('finalTopSpeed').textContent = String(Math.round(game.topSpeed));
-      document.getElementById('finalAvgSpeed').textContent = String(Math.round(game.speedSum / Math.max(game.samples, 1)));
+      document.getElementById('finalAvgSpeed').textContent = String(Math.round(game.speedSum / Math.max(game.speedSamples, 1)));
       document.getElementById('gameOverOverlay').classList.add('visible');
+      playTone('finish');
     }
 
-    function draw3D(map) {
-      ctx.fillStyle = map.skyCol;
-      ctx.fillRect(0, 0, canvas.width, canvas.height / 2);
+    function drawBackground(map) {
+      const grad = ctx.createLinearGradient(0, 0, 0, canvas.height);
+      grad.addColorStop(0, map.colors.skyTop);
+      grad.addColorStop(1, map.colors.skyBottom);
+      ctx.fillStyle = grad;
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-      ctx.fillStyle = map.groundCol;
-      ctx.fillRect(0, canvas.height / 2, canvas.width, canvas.height / 2);
+      ctx.fillStyle = map.colors.grass;
+      ctx.fillRect(0, 420, canvas.width, canvas.height - 420);
 
-      // 3D road depth perception
-      const depth = 15;
-      for (let i = 0; i < depth; i++) {
-        const progress = i / depth;
-        const alpha = progress * 0.8;
-        ctx.globalAlpha = alpha;
-        ctx.fillStyle = '#555';
-        const w = canvas.width * (1 - progress * 0.6);
-        const x = (canvas.width - w) / 2;
-        const y = canvas.height / 2 + (i * canvas.height / (2 * depth));
-        ctx.fillRect(x, y, w, canvas.height / (2 * depth) + 2);
-        ctx.globalAlpha = 1;
-      }
-
-      // Road center line
-      ctx.strokeStyle = '#FFF';
-      ctx.lineWidth = 3;
-      ctx.setLineDash([15, 10]);
+      const road = map.route;
+      ctx.strokeStyle = map.colors.road;
+      ctx.lineWidth = 130;
+      ctx.lineCap = 'round';
+      ctx.lineJoin = 'round';
       ctx.beginPath();
-      ctx.moveTo(canvas.width / 2, canvas.height / 2);
-      ctx.lineTo(canvas.width / 2, canvas.height);
+      ctx.moveTo(road[0].x, road[0].y);
+      for (let i = 1; i < road.length; i++) ctx.lineTo(road[i].x, road[i].y);
+      ctx.stroke();
+
+      ctx.strokeStyle = map.colors.stripe;
+      ctx.lineWidth = 4;
+      ctx.setLineDash([18, 18]);
+      ctx.beginPath();
+      ctx.moveTo(road[0].x, road[0].y);
+      for (let i = 1; i < road.length; i++) ctx.lineTo(road[i].x, road[i].y);
       ctx.stroke();
       ctx.setLineDash([]);
 
-      // Checkpoints as distant markers
-      const map_obj = MAPS[selected.map];
-      map_obj.checkpoints.forEach((cp, idx) => {
-        const dx = cp.x - player.x;
-        const dy = cp.y - player.y;
-        const dist = Math.hypot(dx, dy);
-        if (dist < 300) {
-          const scale = 1 - (dist / 300) * 0.8;
-          const sx = canvas.width / 2 + (dx / dist) * canvas.width * scale * 0.3;
-          const sy = canvas.height / 2 + (dy / dist) * canvas.height * scale * 0.3;
-          
-          ctx.fillStyle = idx === player.checkpoint ? '#00FF00' : '#FFFF00';
-          ctx.beginPath();
-          ctx.arc(sx, sy, 8 * scale, 0, Math.PI * 2);
-          ctx.fill();
-        }
-      });
+      for (const obstacle of map.obstacles) {
+        ctx.fillStyle = '#66543a';
+        ctx.fillRect(obstacle.x - obstacle.w / 2, obstacle.y - obstacle.h / 2, obstacle.w, obstacle.h);
+      }
 
-      // Draw car (top-down view slightly angled for 3D feel)
+      ctx.fillStyle = 'rgba(255,255,255,0.7)';
+      ctx.fillRect(map.route[0].x - 45, map.route[0].y - 6, 90, 12);
+    }
+
+    function drawCar() {
       const car = CARS[selected.car];
       ctx.save();
-      ctx.translate(canvas.width / 2, canvas.height * 0.65);
+      ctx.translate(player.x, player.y);
       ctx.rotate(player.angle * Math.PI / 180);
 
-      // Car body with 3D perspective
       ctx.fillStyle = car.color;
       ctx.fillRect(-car.width / 2, -car.height / 2, car.width, car.height);
 
-      // Car windshield
-      ctx.fillStyle = '#87CEEB';
-      ctx.fillRect(-car.width / 2 + 2, -car.height / 2 + 3, car.width - 4, car.height / 3);
+      ctx.fillStyle = '#dbeafe';
+      ctx.fillRect(-car.width / 2 + 3, -car.height / 2 + 4, car.width - 6, car.height / 2.2);
 
-      // Car headlights (3D effect)
-      ctx.fillStyle = '#FFFF00';
-      ctx.fillRect(-car.width / 2 + 4, -car.height / 2 - 3, 5, 3);
-      ctx.fillRect(car.width / 2 - 9, -car.height / 2 - 3, 5, 3);
-
+      ctx.fillStyle = '#facc15';
+      ctx.fillRect(-car.width / 2 + 3, -car.height / 2 - 4, 6, 4);
+      ctx.fillRect(car.width / 2 - 9, -car.height / 2 - 4, 6, 4);
       ctx.restore();
+    }
+
+    function playTone(type) {
+      if (!audio.enabled) return;
+      if (!audio.ctx) {
+        const AudioCtx = window.AudioContext || window.webkitAudioContext;
+        audio.ctx = new AudioCtx();
+      }
+
+      const ctxAudio = audio.ctx;
+      const oscillator = ctxAudio.createOscillator();
+      const gain = ctxAudio.createGain();
+      oscillator.connect(gain);
+      gain.connect(ctxAudio.destination);
+
+      const now = ctxAudio.currentTime;
+      let frequency = 220;
+      let duration = 0.12;
+
+      if (type === 'accel') { frequency = 260; duration = 0.08; }
+      if (type === 'brake') { frequency = 140; duration = 0.12; }
+      if (type === 'hit') { frequency = 80; duration = 0.18; }
+      if (type === 'finish') { frequency = 420; duration = 0.35; }
+
+      oscillator.type = type === 'finish' ? 'triangle' : 'sawtooth';
+      oscillator.frequency.setValueAtTime(frequency, now);
+      gain.gain.setValueAtTime(0.001, now);
+      gain.gain.exponentialRampToValueAtTime(0.06, now + 0.03);
+      gain.gain.exponentialRampToValueAtTime(0.0001, now + duration);
+      oscillator.start(now);
+      oscillator.stop(now + duration);
     }
 
     function updatePhysics() {
       const map = MAPS[selected.map];
       const car = CARS[selected.car];
 
-      const steerInput = gesture.active ? gesture.smooth : ((keys.a ? -1 : 0) + (keys.d ? 1 : 0));
-      const accel = keys.w || (gesture.active && gesture.throttle > 0.5);
-      const brake = keys.s || (gesture.active && gesture.brake > 0.5);
+      let steerInput = (keys.a ? -1 : 0) + (keys.d ? 1 : 0);
 
-      // Smooth steering with lower turn rate for better control
-      player.steerSmooth += (steerInput - player.steerSmooth) * 0.12;
-      
-      // Smooth acceleration
-      if (accel) player.speed += car.accel;
-      else player.speed *= 0.92;
+      // Gesture steering wheel: tilt hands left/right
+      if (gestureState.active) {
+        const wheelPosition = gestureState.rightHandX - gestureState.leftHandX;
+        steerInput = clamp(wheelPosition * 2.5, -1, 1);
+      }
 
-      if (brake) player.speed -= car.brake;
+      const accelerate = keys.w || (gestureState.active && gestureState.throttle > 0.5);
+      const brake = keys.s || (gestureState.active && gestureState.brake > 0.5);
 
-      player.speed = clamp(player.speed, -60, car.maxSpeed);
-      if (Math.abs(player.speed) < 0.05) player.speed = 0;
+      // Smooth steering
+      player.steerSmooth += (steerInput - player.steerSmooth) * 0.18;
 
-      // Reduced turning speed for smoother control
-      const turnFactor = clamp(Math.abs(player.speed) / 140, 0.3, 1.0);
-      player.angle += player.steerSmooth * car.turn * turnFactor * 0.6;
+      const accelPower = accelerate ? car.acceleration : 0;
+      const brakePower = brake ? car.brakePower : 0;
+
+      if (accelerate) {
+        player.speed += accelPower;
+        if (Math.random() < 0.2) playTone('accel');
+      } else {
+        player.speed *= 0.89;
+      }
+
+      if (brake) {
+        player.speed -= brakePower;
+        if (Math.random() < 0.25) playTone('brake');
+      }
+
+      const maxAllowedSpeed = car.maxSpeed * (1 - Math.abs(player.steerSmooth) * 0.15);
+      player.speed = clamp(player.speed, -80, maxAllowedSpeed);
+      if (Math.abs(player.speed) < 0.08) player.speed = 0;
+
+      const turnFactor = clamp(Math.abs(player.speed) / 180, 0.25, 1.3);
+      const targetAngle = player.steerSmooth * car.turnRate * turnFactor;
+      player.angle += targetAngle * 0.8 + player.drift * 0.15;
+      player.drift *= 0.97;
 
       const rad = (player.angle - 90) * Math.PI / 180;
-      const nextX = player.x + Math.cos(rad) * player.speed * 0.12;
-      const nextY = player.y + Math.sin(rad) * player.speed * 0.12;
+      const nextX = player.x + Math.cos(rad) * player.speed * 0.17;
+      const nextY = player.y + Math.sin(rad) * player.speed * 0.17;
 
-      // Keep in bounds
-      const margin = 50;
-      if (nextX > margin && nextX < 1000 - margin && nextY > margin && nextY < 600 - margin) {
+      if (!isOnTrack(nextX, nextY, map)) {
+        player.speed *= 0.72;
+        player.drift += (player.steerSmooth * 3.5);
+        player.x -= Math.cos(rad) * 8;
+        player.y -= Math.sin(rad) * 8;
+        playTone('hit');
+      } else {
         player.x = nextX;
         player.y = nextY;
-        player.lastOnTrack = performance.now();
-      } else {
-        player.speed *= 0.6;
+      }
+
+      for (const obstacle of map.obstacles) {
+        if (checkObstacle(player.x, player.y, obstacle)) {
+          player.speed *= -0.35;
+          player.angle += 25;
+          player.drift = 0;
+          playTone('hit');
+        }
       }
 
       game.topSpeed = Math.max(game.topSpeed, Math.abs(player.speed));
-      game.samples++;
+      game.speedSamples += 1;
       game.speedSum += Math.abs(player.speed);
-
-      checkpointCollision(map);
+      updateLapProgress(map);
     }
 
     function loop() {
       if (!game.running) return;
 
       updatePhysics();
-      draw3D(MAPS[selected.map]);
+      drawBackground(MAPS[selected.map]);
+      drawCar();
       updateHUD();
       requestAnimationFrame(loop);
     }
 
-    window.addEventListener('keydown', e => { keys[e.key.toLowerCase()] = true; });
-    window.addEventListener('keyup', e => { keys[e.key.toLowerCase()] = false; });
+    function initKeyboard() {
+      window.addEventListener('keydown', (event) => {
+        keys[event.key.toLowerCase()] = true;
+        if (event.key === ' ') event.preventDefault();
+      });
+      window.addEventListener('keyup', (event) => {
+        keys[event.key.toLowerCase()] = false;
+      });
+    }
 
-    function initGestures() {
+    function initGestureTracking() {
       const hands = new Hands({
-        locateFile: file => `https://cdn.jsdelivr.net/npm/@mediapipe/hands/${file}`
+        locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/hands/${file}`
       });
 
-      hands.setOptions({ maxNumHands: 2, modelComplexity: 1, minDetectionConfidence: 0.65, minTrackingConfidence: 0.55 });
+      hands.setOptions({
+        maxNumHands: 2,
+        modelComplexity: 1,
+        minDetectionConfidence: 0.65,
+        minTrackingConfidence: 0.55
+      });
 
-      hands.onResults(results => {
-        if (!results.multiHandLandmarks || !results.multiHandLandmarks.length) {
-          gesture.active = false;
-          gesture.steer = 0;
-          gesture.throttle = 0;
-          gesture.brake = 0;
-          gesture.smooth = 0;
+      hands.onResults((results) => {
+        if (!results.multiHandLandmarks || results.multiHandLandmarks.length === 0) {
+          gestureState.active = false;
+          gestureState.leftHandX = 0.5;
+          gestureState.rightHandX = 0.5;
+          gestureState.throttle = 0;
+          gestureState.brake = 0;
           return;
         }
 
-        const hand = results.multiHandLandmarks[0];
-        const wrist = hand[0];
-        const tips = [hand[8], hand[12], hand[16], hand[20]];
-        const fingerSpread = Math.hypot(tips[0].x - tips[3].x, tips[0].y - tips[3].y);
-        const fingerClosed = tips.filter(t => t.y > wrist.y + 0.05).length;
-        const palmX = (hand[5].x + hand[9].x + hand[13].x + hand[17].x) / 4;
+        // Get hand positions for steering wheel gesture
+        let leftHandX = 0.5;
+        let rightHandX = 0.5;
 
-        gesture.steer = clamp((palmX - 0.5) * 2.2, -1, 1);
-        gesture.throttle = fingerSpread > 0.18 && fingerClosed >= 2 ? 1 : 0;
-        gesture.brake = fingerSpread < 0.12 ? 1 : 0;
-        gesture.smooth += (gesture.steer - gesture.smooth) * 0.15;
-        gesture.active = true;
+        for (let i = 0; i < results.multiHandLandmarks.length; i++) {
+          const hand = results.multiHandLandmarks[i];
+          const handedness = results.multiHandedness[i].label;
+          const palmX = (hand[5].x + hand[9].x + hand[13].x + hand[17].x) / 4;
+
+          if (handedness === 'Left') {
+            leftHandX = palmX;
+          } else if (handedness === 'Right') {
+            rightHandX = palmX;
+          }
+        }
+
+        // Get primary hand for throttle/brake
+        const primaryHand = results.multiHandLandmarks[0];
+        const wrist = primaryHand[0];
+        const tips = [primaryHand[8], primaryHand[12], primaryHand[16], primaryHand[20]];
+        const fingerSpread = Math.hypot(tips[0].x - tips[3].x, tips[0].y - tips[3].y);
+        const fingerClosed = tips.filter((tip) => tip.y > wrist.y + 0.05).length;
+
+        const openPalm = fingerSpread > 0.18 && fingerClosed >= 2;
+        const fists = fingerSpread < 0.12;
+
+        gestureState.leftHandX = leftHandX;
+        gestureState.rightHandX = rightHandX;
+        gestureState.throttle = openPalm ? 1 : 0;
+        gestureState.brake = fists ? 1 : 0;
+        gestureState.active = true;
       });
 
       const camera = new Camera(webcam, {
-        onFrame: async () => { await hands.send({ image: webcam }); },
-        width: 320, height: 240
+        onFrame: async () => {
+          await hands.send({ image: webcam });
+        },
+        width: 320,
+        height: 240
       });
 
       camera.start();
     }
 
-    setupSelectors();
-    initGestures();
-    loadLeaderboard();
+    function init() {
+      setupSelectors();
+      initKeyboard();
+      initGestureTracking();
+      loadLeaderboard();
+    }
+
+    init();
   </script>
 </body>
 </html>
